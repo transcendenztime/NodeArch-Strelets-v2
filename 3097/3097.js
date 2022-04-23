@@ -1,9 +1,26 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
 const {check, validationResult} = require("express-validator");
 
 const webserver = express();
 
 const port = 3097;
+const logFN = path.join(__dirname, "_server.log");
+
+// пишет строку в файл лога и одновременно в консоль
+const logLineSync = (logFilePath, logLine) => {
+  const logDT = new Date();
+  let time = logDT.toLocaleDateString() + " " + logDT.toLocaleTimeString();
+  let fullLogLine = time + " " + logLine;
+
+  console.log(fullLogLine); // выводим сообщение в консоль
+
+  const logFd = fs.openSync(logFilePath, "a+"); // и это же сообщение добавляем в лог-файл
+  fs.writeSync(logFd, fullLogLine + os.EOL); // os.EOL - это символ конца строки, он разный для разных ОС
+  fs.closeSync(logFd);
+};
 
 const createPage = (errors, formFields) => {
   let pageBody = `
@@ -103,6 +120,7 @@ const createUserDataPage = formFields => {
 };
 
 webserver.get("/", function (req, res) {
+  logLineSync(logFN, `[${port}] ` + "index.html called");
   res.send(createPage());
 });
 
@@ -139,6 +157,8 @@ webserver.get(
       .escape(),
   ],
   (req, res) => {
+    logLineSync(logFN, `[${port}] ` + "/send called, get pars: " + JSON.stringify(req.query));
+
     const errors = validationResult(req);
     let mappedErrors = errors.mapped();
 
