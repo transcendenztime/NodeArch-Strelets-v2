@@ -86,21 +86,17 @@ const createPage = (errors, formFields) => {
 const createUserDataPage = formFields => {
   let body = `
     <head>
-        <title>Strelets Vadim(3097)</title>
+      <title>Strelets Vadim(3097)</title>
     </head>
-    
     <body>
-    
-    <h1>Strelets Vadim(3097)</h1>
-    
-    <div>
-    <h2>Мы вас узнали!</h2>
-    <span style="font-weight: bold">логин: </span> <span>${formFields.login}</span>
-    <br /><span style="font-weight: bold">пароль: </span> <span>${formFields.password}</span>
-    <br /><span style="font-weight: bold">email: </span> <span>${formFields.email}</span>
-    <br /><span style="font-weight: bold">возраст: </span> <span>${formFields.age}</span>
-    </div>
-    
+      <h1>Strelets Vadim(3097)</h1>
+      <div>
+        <h2>Мы вас узнали!</h2>
+        <span style="font-weight: bold">логин: </span> <span>${formFields.login}</span>
+        <br /><span style="font-weight: bold">пароль: </span> <span>${formFields.password}</span>
+        <br /><span style="font-weight: bold">email: </span> <span>${formFields.email}</span>
+        <br /><span style="font-weight: bold">возраст: </span> <span>${formFields.age}</span>
+      </div>
     </body>`;
 
   return body;
