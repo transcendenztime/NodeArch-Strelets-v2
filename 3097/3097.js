@@ -133,7 +133,7 @@ webserver.get(
       .isEmpty()
       .withMessage("Поле обязательно для заполения")
       .isAlphanumeric()
-      .withMessage("Допустимы только буквы и цифры")
+      .withMessage("Допустимы латинские буквы и цифры")
       .isLength({min: 3, max: 12})
       .withMessage("От 3 до 12 символов")
       .escape(),
