@@ -113,6 +113,7 @@ const createUserDataPage = formFields => {
         <br /><span style="font-weight: bold">пароль: </span> <span>${formFields.password}</span>
         <br /><span style="font-weight: bold">email: </span> <span>${formFields.email}</span>
         <br /><span style="font-weight: bold">возраст: </span> <span>${formFields.age}</span>
+        <br /><br /><a href="/">Вернуться на форму авторизации</a>
       </div>
     </body>`;
 
