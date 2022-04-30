@@ -4,6 +4,7 @@
 .vscode/
 *.code-workspace
 **/_server.log
+**/_stats.json
 **/uploads
 _nodemon.log
 nginx_caches/
