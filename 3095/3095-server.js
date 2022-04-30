@@ -1,5 +1,5 @@
 const express = require("express");
-const bodyParser = require('body-parser');
+const bodyParser = require("body-parser");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
@@ -13,9 +13,23 @@ webserver.use(bodyParser.json());
 // webserver.use(express.urlencoded({extended: true}));
 
 const port = 3095;
+const logFN = path.join(__dirname, "_server.log");
 const jsonFilesPath = "jsonFiles";
 const variantsFilePath = path.join(jsonFilesPath, "variants.json");
 const statsFilePath = path.join(jsonFilesPath, "_stats.json");
+
+// пишет строку в файл лога и одновременно в консоль
+const logLineSync = (logFilePath, logLine) => {
+  const logDT = new Date();
+  let time = logDT.toLocaleDateString() + " " + logDT.toLocaleTimeString();
+  let fullLogLine = time + " " + logLine;
+
+  console.log(fullLogLine); // выводим сообщение в консоль
+
+  const logFd = fs.openSync(logFilePath, "a+"); // и это же сообщение добавляем в лог-файл
+  fs.writeSync(logFd, fullLogLine + os.EOL); // os.EOL - это символ конца строки, он разный для разных ОС
+  fs.closeSync(logFd);
+};
 
 // функция нужна для того, чтобы на сервере создался файл с нулевой статисткой
 createInitialStatFile = () => {
@@ -46,16 +60,16 @@ createInitialStatFile = () => {
 };
 
 webserver.get("/variants", (req, res) => {
-  // const variants = fs.readFileSync(path.join(jsonFilesPath, "variants.json"), "utf8");
-  // res.setHeader("Content-Type", "application/json");
+  logLineSync(logFN, `[${port}] ` + "/variants service called");
   const variants = fs.readFileSync(variantsFilePath);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.send(variants);
 });
 
 webserver.post("/stat", (req, res) => {
+  logLineSync(logFN, `[${port}] ` + "/stats service called");
   let stat;
-  // если файл статистики существует
+  // если файл статистики существует, прочитаем его
   if (fs.existsSync(statsFilePath)) {
     stat = fs.readFileSync(statsFilePath);
   } else {
@@ -69,6 +83,7 @@ webserver.post("/stat", (req, res) => {
 });
 
 webserver.post("/vote", (req, res) => {
+  logLineSync(logFN, `[${port}] ` + "/vote service called");
   let fileContent = fs.readFileSync(statsFilePath, "utf8");
   fileContent = JSON.parse(fileContent);
 
@@ -82,17 +97,19 @@ webserver.post("/vote", (req, res) => {
   fs.writeFileSync(statsFilePath, JSON.stringify(fileContent));
   res.status(200).end();*/
 
-  const elem = fileContent.find((stat) => {
+  const elem = fileContent.find(stat => {
     return stat.id === req.body.id;
   });
 
-  if(elem) {
+  if (elem) {
     elem.count = elem.count + 1;
     fs.writeFileSync(statsFilePath, JSON.stringify(fileContent));
+    logLineSync(logFN, `[${port}] ` + "/vote service success");
     res.status(200).end();
+  } else {
+    logLineSync(logFN, `[${port}] ` + "/vote service error");
+    res.status(530).end();
   }
-
-  res.status(530).end();
 });
 
 webserver.listen(port, () => {
