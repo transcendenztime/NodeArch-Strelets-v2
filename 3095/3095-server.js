@@ -9,7 +9,6 @@ const webserver = express();
 // отдаем index.html как статику
 webserver.use(express.static(path.join(__dirname, "public")));
 webserver.use(bodyParser.json());
-// webserver.use(bodyParser.urlencoded({extended:true}));
 // webserver.use(express.urlencoded({extended: true}));
 
 const port = 3095;
