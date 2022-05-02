@@ -60,54 +60,69 @@ createInitialStatFile = () => {
 
 webserver.get("/variants", (req, res) => {
   logLineSync(logFN, `[${port}] ` + "/variants service called");
-  const variants = fs.readFileSync(variantsFilePath);
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.send(variants);
+  try {
+    const variants = fs.readFileSync(variantsFilePath);
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.send(variants);
+  } catch (e) {
+    logLineSync(logFN, `[${port}] ` + "/variants service error 531");
+    res.status(531).end();
+  }
 });
 
 webserver.post("/stat", (req, res) => {
   logLineSync(logFN, `[${port}] ` + "/stats service called");
-  let stat;
-  // если файл статистики существует, прочитаем его
-  if (fs.existsSync(statsFilePath)) {
-    stat = fs.readFileSync(statsFilePath);
-  } else {
-    // если файл статистики не существует, создадим его базовый вариант (где у всех вариантов по 0 голосов)
-    createInitialStatFile();
-    stat = fs.readFileSync(statsFilePath);
-  }
+  try {
+    let stat;
+    // если файл статистики существует, прочитаем его
+    if (fs.existsSync(statsFilePath)) {
+      stat = fs.readFileSync(statsFilePath);
+    } else {
+      // если файл статистики не существует, создадим его базовый вариант (где у всех вариантов по 0 голосов)
+      createInitialStatFile();
+      stat = fs.readFileSync(statsFilePath);
+    }
 
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.send(stat);
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.send(stat);
+  } catch (e) {
+    logLineSync(logFN, `[${port}] ` + "/stat service error 531");
+    res.status(531).end();
+  }
 });
 
 webserver.post("/vote", (req, res) => {
   logLineSync(logFN, `[${port}] ` + "/vote service called");
-  let fileContent = fs.readFileSync(statsFilePath, "utf8");
-  fileContent = JSON.parse(fileContent);
+  try {
+    let fileContent = fs.readFileSync(statsFilePath, "utf8");
+    fileContent = JSON.parse(fileContent);
 
-  /* fileContent.forEach((stat) => {
-    console.log(stat)
-    if(stat.id === req.body.id) {
-      stat.count = stat.count + 1;
-    }
-  });
+    /* fileContent.forEach((stat) => {
+      console.log(stat)
+      if(stat.id === req.body.id) {
+        stat.count = stat.count + 1;
+      }
+    });
 
-  fs.writeFileSync(statsFilePath, JSON.stringify(fileContent));
-  res.status(200).end();*/
-
-  const elem = fileContent.find(stat => {
-    return stat.id === req.body.id;
-  });
-
-  if (elem) {
-    elem.count = elem.count + 1;
     fs.writeFileSync(statsFilePath, JSON.stringify(fileContent));
-    logLineSync(logFN, `[${port}] ` + "/vote service success");
-    res.status(200).end();
-  } else {
-    logLineSync(logFN, `[${port}] ` + "/vote service error");
-    res.status(530).end();
+    res.status(200).end();*/
+
+    const elem = fileContent.find(stat => {
+      return stat.id === req.body.id;
+    });
+
+    if (elem) {
+      elem.count = elem.count + 1;
+      fs.writeFileSync(statsFilePath, JSON.stringify(fileContent));
+      logLineSync(logFN, `[${port}] ` + "/vote service success");
+      res.status(200).end();
+    } else {
+      logLineSync(logFN, `[${port}] ` + "/vote service error 530");
+      res.status(530).end();
+    }
+  } catch (e) {
+    logLineSync(logFN, `[${port}] ` + "/vote service error 531");
+    res.status(531).end();
   }
 });
 
