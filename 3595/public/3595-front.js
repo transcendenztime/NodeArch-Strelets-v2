@@ -29,7 +29,7 @@ updateStatistics = data => {
 };
 
 statService = () => {
-  fetch("/stat", {method: "POST"})
+  fetch("/stat", {method: "GET"})
     .then(response => response.json())
     .then(data => {
       updateStatistics(data);

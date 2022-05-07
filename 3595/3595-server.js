@@ -11,7 +11,7 @@ webserver.use(express.static(path.join(__dirname, "public")));
 webserver.use(bodyParser.json());
 // webserver.use(express.urlencoded({extended: true}));
 
-const port = 3095;
+const port = 3595;
 const logFN = path.join(__dirname, "_server.log");
 const jsonFilesPath = "jsonFiles";
 const variantsFilePath = path.join(jsonFilesPath, "variants.json");
@@ -70,7 +70,7 @@ webserver.get("/variants", (req, res) => {
   }
 });
 
-webserver.post("/stat", (req, res) => {
+webserver.get("/stat", (req, res) => {
   logLineSync(logFN, `[${port}] ` + "/stats service called");
   try {
     let stat;
@@ -84,6 +84,7 @@ webserver.post("/stat", (req, res) => {
     }
 
     res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Cache-Control","public, max-age=0"); // ответ может быть сохранён любым кэшем, в т.ч. кэшем браузера, на 0 секунд
     res.send(stat);
   } catch (e) {
     logLineSync(logFN, `[${port}] ` + "/stat service error 531");
