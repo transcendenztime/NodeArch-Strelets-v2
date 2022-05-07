@@ -57,3 +57,39 @@ voteService = id => {
       alert(`Произошла ошибка при вызове сервиса /vote!`);
     });
 };
+
+getStatInfo = format => {
+  let acceptHeader;
+
+  if (format === "html") {
+    acceptHeader = "text/html";
+  } else if (format === "json") {
+    acceptHeader = "application/json";
+  }
+
+  const fetchOptions = {method: "POST", headers: {Accept: acceptHeader}};
+
+  fetch("/info", fetchOptions)
+    .then(response => {
+      if (response.ok) {
+        return response.text();
+      } else {
+        return Promise.reject(response.status);
+      }
+    })
+    .then(data => {
+      document.getElementById("statTextArea").innerHTML = data;
+    })
+    .catch(e => {
+      console.error(e);
+      if (e === 532) {
+        alert(`Вы запрашиваете результаты голосования в неизвестном формате!`);
+      } else {
+        alert(`Произошла ошибка при вызове сервиса /info!`);
+      }
+    });
+};
+
+clearTextArea = () => {
+  document.getElementById("statTextArea").innerHTML = "";
+};

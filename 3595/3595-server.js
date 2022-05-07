@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const crypto = require('crypto');
+const crypto = require("crypto");
 
 const webserver = express();
 
@@ -17,6 +17,7 @@ const logFN = path.join(__dirname, "_server.log");
 const jsonFilesPath = "jsonFiles";
 const variantsFilePath = path.join(jsonFilesPath, "variants.json");
 const statsFilePath = path.join(jsonFilesPath, "_stats.json");
+const UNKNOWN_ACCEPT_HEADER = "unknownAcceptHeader";
 
 // пишет строку в файл лога и одновременно в консоль
 const logLineSync = (logFilePath, logLine) => {
@@ -84,17 +85,17 @@ webserver.get("/stat", (req, res) => {
       stat = fs.readFileSync(statsFilePath);
     }
 
-    const ETag = crypto.createHash('sha512').update(stat).digest('hex');
-    const ifNoneMatch=req.header("If-None-Match");
+    const ETag = crypto.createHash("sha512").update(stat).digest("hex");
+    const ifNoneMatch = req.header("If-None-Match");
 
-    if ( ifNoneMatch && (ifNoneMatch===ETag) ) {
-      logLineSync(logFN,`[${port}] `+"отдаём 304 т.к. If-None-Match совпал с ETag");
-      res.setHeader("ETag",ETag);
+    if (ifNoneMatch && ifNoneMatch === ETag) {
+      logLineSync(logFN, `[${port}] ` + "отдаём 304 т.к. If-None-Match совпал с ETag");
+      res.setHeader("ETag", ETag);
       res.status(304).end(); // в кэше браузера - годная версия, пусть её использует
-    }else{
-      res.setHeader("ETag",ETag);
+    } else {
+      res.setHeader("ETag", ETag);
       // кешируем запрос на 0 секунд
-      res.setHeader("Cache-Control","public, max-age=0"); // ответ может быть сохранён любым кэшем, в т.ч. кэшем браузера, на 0 секунд
+      res.setHeader("Cache-Control", "public, max-age=0"); // ответ может быть сохранён любым кэшем, в т.ч. кэшем браузера, на 0 секунд
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       res.send(stat);
     }
@@ -140,6 +141,45 @@ webserver.post("/vote", (req, res) => {
   } catch (e) {
     logLineSync(logFN, `[${port}] ` + "/vote service error 531");
     res.status(531).end();
+  }
+});
+
+webserver.post("/info", (req, res) => {
+  logLineSync(logFN, `[${port}] ` + "/info service called");
+  try {
+    // добавим сюда этот блок для ситуации, когда пользователь запросит статистику до первого голосования, т.е. когда файл со статистикой еще не будет создан
+    let stat;
+    // если файл статистики существует, прочитаем его
+    if (fs.existsSync(statsFilePath)) {
+      stat = fs.readFileSync(statsFilePath);
+    } else {
+      // если файл статистики не существует, создадим его базовый вариант (где у всех вариантов по 0 голосов)
+      createInitialStatFile();
+      stat = fs.readFileSync(statsFilePath);
+    }
+
+    const acceptHeader = req.headers.accept;
+    if (acceptHeader === "text/html") {
+      stat = JSON.parse(stat);
+      let statistics = stat
+        .map(st => `<div><span>${st.value}: </span><span style="font-weight: bold;">${st.count}</span></div>`)
+        .join(`<br>`);
+      res.send(statistics);
+    } else if (acceptHeader === "application/json") {
+      logLineSync(logFN, `[${port}] ` + "/info service success");
+      res.send(stat);
+    } else {
+      // если с фронта пришел непредусмотренный нами заголовок Accept
+      throw UNKNOWN_ACCEPT_HEADER;
+    }
+  } catch (e) {
+    if (e === UNKNOWN_ACCEPT_HEADER) {
+      logLineSync(logFN, `[${port}] ` + "/info service UNKNOWN_ACCEPT_HEADER error");
+      res.status(532).end();
+    } else {
+      logLineSync(logFN, `[${port}] ` + "/info service error 531");
+      res.status(531).end();
+    }
   }
 });
 
