@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
+const crypto = require('crypto');
 
 const webserver = express();
 
@@ -83,9 +84,24 @@ webserver.get("/stat", (req, res) => {
       stat = fs.readFileSync(statsFilePath);
     }
 
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.setHeader("Cache-Control","public, max-age=0"); // ответ может быть сохранён любым кэшем, в т.ч. кэшем браузера, на 0 секунд
-    res.send(stat);
+    const ETag = crypto.createHash('sha512').update(stat).digest('hex');
+    const ifNoneMatch=req.header("If-None-Match");
+
+    if ( ifNoneMatch && (ifNoneMatch===ETag) ) {
+      logLineSync(logFN,`[${port}] `+"отдаём 304 т.к. If-None-Match совпал с ETag");
+      res.setHeader("ETag",ETag);
+      res.status(304).end(); // в кэше браузера - годная версия, пусть её использует
+    }else{
+      res.setHeader("ETag",ETag);
+      // кешируем запрос на 0 секунд
+      res.setHeader("Cache-Control","public, max-age=0"); // ответ может быть сохранён любым кэшем, в т.ч. кэшем браузера, на 0 секунд
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.send(stat);
+    }
+
+    // res.setHeader("Content-Type", "application/json; charset=utf-8");
+    // res.setHeader("Cache-Control","public, max-age=0"); // ответ может быть сохранён любым кэшем, в т.ч. кэшем браузера, на 0 секунд
+    // res.send(stat);
   } catch (e) {
     logLineSync(logFN, `[${port}] ` + "/stat service error 531");
     res.status(531).end();
