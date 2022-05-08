@@ -4,7 +4,8 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
-const convert = require("xml-js");
+// const convert = require("xml-js");
+const js2xmlparser = require("js2xmlparser");
 
 const webserver = express();
 
@@ -167,14 +168,15 @@ webserver.post("/info", (req, res) => {
     const acceptHeader = req.headers.accept;
     if (acceptHeader === "text/xml") {
       const statInJson = JSON.parse(stat);
-      const options = {compact: true, ignoreComment: true, spaces: 4, addParent: true};
-      const statInXml = convert.json2xml(statInJson, options);
+      // const options = {compact: true, ignoreComment: true, spaces: 4, addParent: true};
+      // const statInXml = convert.json2xml(statInJson, options);
+      const statInXml = js2xmlparser.parse("stat", statInJson);
       res.send(statInXml);
     } else if (acceptHeader === "text/html") {
       const statInJson = JSON.parse(stat);
       let statistics = statInJson
         .map(st => `<div><span>${st.value}: </span><span style="font-weight: bold;">${st.count}</span></div>`)
-        .join(`<br>`);
+        .join(`<br />`);
       res.send(statistics);
     } else if (acceptHeader === "application/json") {
       logLineSync(logFN, `[${port}] ` + "/info service success");

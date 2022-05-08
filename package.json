@@ -38,6 +38,7 @@
     "jasmine-node": "^3.0.0",
     "jimp": "^0.8.5",
     "js-sha256": "^0.9.0",
+    "js2xmlparser": "^4.0.2",
     "mongodb": "^3.3.2",
     "mongoose": "^5.7.5",
     "multer": "^1.4.2",
