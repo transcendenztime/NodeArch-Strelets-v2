@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const crypto = require("crypto");
+const convert = require("xml-js");
 
 const webserver = express();
 
@@ -19,6 +20,30 @@ const variantsFilePath = path.join(jsonFilesPath, "variants.json");
 const statsFilePath = path.join(jsonFilesPath, "_stats.json");
 const UNKNOWN_ACCEPT_HEADER = "unknownAcceptHeader";
 
+// информация для создания файла с нулевой статистикой
+const initialStatContent = [
+  {
+    id: "1",
+    value: "Английский",
+    count: 0,
+  },
+  {
+    id: "2",
+    value: "Немецкий",
+    count: 0,
+  },
+  {
+    id: "3",
+    value: "JavaScript!!!",
+    count: 0,
+  },
+  {
+    id: "4",
+    value: "Никакой(",
+    count: 0,
+  },
+];
+
 // пишет строку в файл лога и одновременно в консоль
 const logLineSync = (logFilePath, logLine) => {
   const logDT = new Date();
@@ -32,34 +57,28 @@ const logLineSync = (logFilePath, logLine) => {
   fs.closeSync(logFd);
 };
 
-// функция нужна для того, чтобы на сервере создался файл с нулевой статисткой
+// функция нужна для того, чтобы на сервере создался файл с нулевой статистикой
 createInitialStatFile = () => {
-  const fileContent = [
-    {
-      id: "1",
-      value: "Английский",
-      count: 0,
-    },
-    {
-      id: "2",
-      value: "Немецкий",
-      count: 0,
-    },
-    {
-      id: "3",
-      value: "JavaScript!!!",
-      count: 0,
-    },
-    {
-      id: "4",
-      value: "Никакой(",
-      count: 0,
-    },
-  ];
-
-  fs.writeFileSync(statsFilePath, JSON.stringify(fileContent));
+  fs.writeFileSync(statsFilePath, JSON.stringify(initialStatContent));
 };
 
+// если файл статистики существует, откроем его. Иначе создадим новый с нулевой статистикой.
+openOrCreateStatFile = () => {
+  let stat;
+  // если файл статистики существует, прочитаем его
+  if (fs.existsSync(statsFilePath)) {
+    stat = fs.readFileSync(statsFilePath);
+  } else {
+    // если файл статистики не существует, создадим его базовый вариант (где у всех вариантов по 0 голосов)
+    fs.writeFileSync(statsFilePath, JSON.stringify(initialStatContent));
+    stat = fs.readFileSync(statsFilePath);
+    logLineSync(logFN, `[${port}] ` + "empty _stats.json file created");
+  }
+
+  return stat;
+};
+
+// возвращает варианты для голосования
 webserver.get("/variants", (req, res) => {
   logLineSync(logFN, `[${port}] ` + "/variants service called");
   try {
@@ -72,19 +91,13 @@ webserver.get("/variants", (req, res) => {
   }
 });
 
+// сервис, который возвращает статистику
 webserver.get("/stat", (req, res) => {
   logLineSync(logFN, `[${port}] ` + "/stats service called");
   try {
-    let stat;
-    // если файл статистики существует, прочитаем его
-    if (fs.existsSync(statsFilePath)) {
-      stat = fs.readFileSync(statsFilePath);
-    } else {
-      // если файл статистики не существует, создадим его базовый вариант (где у всех вариантов по 0 голосов)
-      createInitialStatFile();
-      stat = fs.readFileSync(statsFilePath);
-    }
+    const stat = openOrCreateStatFile();
 
+    // создаем ETag при помощи пакета crypto
     const ETag = crypto.createHash("sha512").update(stat).digest("hex");
     const ifNoneMatch = req.header("If-None-Match");
 
@@ -109,6 +122,7 @@ webserver.get("/stat", (req, res) => {
   }
 });
 
+// сервис приема голоса
 webserver.post("/vote", (req, res) => {
   logLineSync(logFN, `[${port}] ` + "/vote service called");
   try {
@@ -144,24 +158,21 @@ webserver.post("/vote", (req, res) => {
   }
 });
 
+// запрос статистики в разных форматах
 webserver.post("/info", (req, res) => {
   logLineSync(logFN, `[${port}] ` + "/info service called");
   try {
-    // добавим сюда этот блок для ситуации, когда пользователь запросит статистику до первого голосования, т.е. когда файл со статистикой еще не будет создан
-    let stat;
-    // если файл статистики существует, прочитаем его
-    if (fs.existsSync(statsFilePath)) {
-      stat = fs.readFileSync(statsFilePath);
-    } else {
-      // если файл статистики не существует, создадим его базовый вариант (где у всех вариантов по 0 голосов)
-      createInitialStatFile();
-      stat = fs.readFileSync(statsFilePath);
-    }
+    const stat = openOrCreateStatFile();
 
     const acceptHeader = req.headers.accept;
-    if (acceptHeader === "text/html") {
-      stat = JSON.parse(stat);
-      let statistics = stat
+    if (acceptHeader === "text/xml") {
+      const statInJson = JSON.parse(stat);
+      const options = {compact: true, ignoreComment: true, spaces: 4, addParent: true};
+      const statInXml = convert.json2xml(statInJson, options);
+      res.send(statInXml);
+    } else if (acceptHeader === "text/html") {
+      const statInJson = JSON.parse(stat);
+      let statistics = statInJson
         .map(st => `<div><span>${st.value}: </span><span style="font-weight: bold;">${st.count}</span></div>`)
         .join(`<br>`);
       res.send(statistics);
@@ -174,7 +185,7 @@ webserver.post("/info", (req, res) => {
     }
   } catch (e) {
     if (e === UNKNOWN_ACCEPT_HEADER) {
-      logLineSync(logFN, `[${port}] ` + "/info service UNKNOWN_ACCEPT_HEADER error");
+      logLineSync(logFN, `[${port}] ` + `/info service ${UNKNOWN_ACCEPT_HEADER} error`);
       res.status(532).end();
     } else {
       logLineSync(logFN, `[${port}] ` + "/info service error 531");

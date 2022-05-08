@@ -61,7 +61,10 @@ voteService = id => {
 getStatInfo = format => {
   let acceptHeader;
 
-  if (format === "html") {
+  // формируем заголовок запроса Accept
+  if (format === "xml") {
+    acceptHeader = "text/xml";
+  } else if (format === "html") {
     acceptHeader = "text/html";
   } else if (format === "json") {
     acceptHeader = "application/json";
