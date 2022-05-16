@@ -6,6 +6,8 @@ const {check, validationResult} = require("express-validator");
 
 const webserver = express();
 
+webserver.use(express.urlencoded({extended: true}));
+
 const port = 4097;
 const logFN = path.join(__dirname, "_server.log");
 
@@ -41,7 +43,7 @@ const createPage = (errors, formFields) => {
   }
 
   pageBody += `
-        <form method="GET" action="/send">
+        <form method="POST" action="/send">
             ваш логин: <input type="text" autocomplete="off"`;
 
   if (formFields && formFields.login) {
@@ -125,7 +127,12 @@ webserver.get("/", function (req, res) {
   res.send(createPage());
 });
 
-webserver.get(
+webserver.get("/send", function (req, res) {
+  logLineSync(logFN, `[${port}] ` + "GET /send called, get pars: " + JSON.stringify(req.query));
+  res.send(createUserDataPage(req.query));
+});
+
+webserver.post(
   "/send",
   [
     //валидация
@@ -158,7 +165,7 @@ webserver.get(
       .escape(),
   ],
   (req, res) => {
-    logLineSync(logFN, `[${port}] ` + "/send called, get pars: " + JSON.stringify(req.query));
+    logLineSync(logFN, `[${port}] ` + "POST /send called, post pars: " + JSON.stringify(req.body));
 
     const errors = validationResult(req);
     let mappedErrors = errors.mapped();
@@ -166,9 +173,14 @@ webserver.get(
     // если объект с ошибками не пустой, значит форма не прошла валидацию
     if (!errors.isEmpty()) {
       // вернем форму со всеми введенными значениями
-      res.send(createPage(mappedErrors, req.query));
+      res.send(createPage(mappedErrors, req.body));
     } else {
-      res.send(createUserDataPage(req.query));
+      // res.send(createUserDataPage(req.body));
+      // переадресация на GET-сервис /send
+      res.redirect(
+        302,
+        `/send?login=${req.body.login}&password=${req.body.password}&email=${req.body.email}&age=${req.body.age}`,
+      );
     }
   },
 );
