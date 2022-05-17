@@ -8,3 +8,4 @@
 **/uploads
 _nodemon.log
 nginx_caches/
+/4095-Postman/frontend/public/
