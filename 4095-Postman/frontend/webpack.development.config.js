@@ -4,7 +4,7 @@ export default new Config().extend('webpack.base.config.js').merge({
   output: {
     filename: '[name].bundle.[hash].js',
   },
-  devtool: 'eval-source-map',
+  devtool: 'cheap-module-source-map',
   devServer: {
     historyApiFallback: true,
   },
