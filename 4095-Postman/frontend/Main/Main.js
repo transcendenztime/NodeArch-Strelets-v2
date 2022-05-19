@@ -5,9 +5,6 @@ import {HeadersNames, Methods} from "../Constants/constants";
 // import "./Main.scss";
 import "./MainFlex.scss";
 
-// разный урл в зависимости от dev или prod сборки
-const servicesPrefix = process.env.NODE_ENV === "development" ? "http://localhost:4095" : "";
-
 const Main = () => {
   const [text, setText] = useState(null);
 
@@ -21,7 +18,7 @@ const Main = () => {
   const [response, setResponse] = useState(null);
 
   const testService = async () => {
-    const response = await fetch(`${servicesPrefix}/test`, {
+    const response = await fetch("/test", {
       method: Methods.GET,
     });
     const answer = await response.text();
@@ -40,7 +37,7 @@ const Main = () => {
       ...(requestMethod === Methods.POST && {requestBody}),
     };
 
-    let answer = await fetch(`${servicesPrefix}/execute`, {
+    let answer = await fetch("/execute", {
       method: Methods.POST,
       headers: {
         "Content-type": "application/json",
