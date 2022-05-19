@@ -26,12 +26,12 @@ const Main = () => {
     setText(answer);
   };
 
-  console.log(process.env.NODE_ENV);
+  // console.log(process.env.NODE_ENV);
 
   const executeRequest = async () => {
     const body = {
-      requestMethod,
       URL,
+      requestMethod,
       headers,
       ...(requestMethod === Methods.GET && {getParameters}),
       ...(requestMethod === Methods.POST && {requestBody}),
@@ -44,6 +44,12 @@ const Main = () => {
       },
       body: JSON.stringify(body),
     });
+
+    if (answer.status === 500) {
+      const error = await answer.text();
+      alert(`Ошибка сервера при выполнении запроса "/execute": ${error}`);
+      return;
+    }
 
     answer = await answer.json();
     setIsResponseExecuted(true);
@@ -58,6 +64,18 @@ const Main = () => {
     setHeaders([]);
     setIsResponseExecuted(false);
     setResponse(null);
+  };
+
+  const parseResponseHeaders = headers => {
+    let result = [];
+    for (let key in headers) {
+      result.push(
+        <li key={key}>
+          {key}: {headers[key]}
+        </li>,
+      );
+    }
+    return result;
   };
 
   const setFieldValue = e => {
@@ -249,6 +267,30 @@ const Main = () => {
     );
   };
 
+  const renderResponseParams = () => {
+    return (
+      <div>
+        {isResponseExecuted && response && (
+          <div className={"Main__response"}>
+            <h2>Параметры ответа:</h2>
+            <div className={"Main__label"}>
+              Статус: <span>{response.status}</span>
+            </div>
+            <div className={"Main__label"}>
+              Заголовки: <br />
+              {<ul>{parseResponseHeaders(response.headers)}</ul>}
+            </div>
+            <div className={"Main__label"}>
+              Тело:
+              <br />
+              <textarea defaultValue={response.data} />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       <div>Hello</div>
@@ -262,6 +304,7 @@ const Main = () => {
         {renderHeaders()}
       </div>
       {renderButtons()}
+      {renderResponseParams()}
     </div>
   );
 };
