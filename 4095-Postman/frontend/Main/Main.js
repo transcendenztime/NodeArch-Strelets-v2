@@ -2,10 +2,14 @@ import React from "react";
 import {useEffect, useState} from "react";
 
 import {HeadersNames, Methods} from "../Constants/constants";
-import {isURLValid} from "../../../utils/utils";
+// import {isURLValid} from "../../../utils/utils";
 
 // import "./Main.scss";
 import "./MainFlex.scss";
+import {isURLValid} from "../../../utils/utils";
+
+// TODO удаление запросов (в этом случае с бэка нужно присылать не requests.length, а максимальный requestId + 1)
+// TODO красивая верстка
 
 const Main = () => {
   const [text, setText] = useState(null);
@@ -57,7 +61,7 @@ const Main = () => {
       errors.URL = "Ввод url'a обязателен";
       isValid = false;
     } else if (!isURLValid(URL)) {
-      errors.URL = "Неверный URL";
+      errors.URL = "Неверный формат URL";
       isValid = false;
     }
 
@@ -113,7 +117,7 @@ const Main = () => {
       body: JSON.stringify(body),
     });
 
-    if (answer.status === 500) {
+    if (answer.status === 500 && answer.status === 510) {
       const error = await answer.text();
       alert(`Ошибка сервера при выполнении запроса "/execute": ${error}`);
       return;
