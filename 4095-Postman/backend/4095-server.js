@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
+const fs = require("fs");
 const fetch = require("node-fetch");
 
 const webserver = express();
@@ -9,19 +10,28 @@ webserver.use(express.static(path.join(__dirname, "../frontend/public")));
 webserver.use(bodyParser.json());
 
 const port = 4095;
+const jsonFilesPath = "jsonFiles";
+const requestsFilePath = path.join(jsonFilesPath, "_requests.json");
 
 const Methods = {
   GET: "GET",
   POST: "POST",
 };
-// мидлварь для CORS
-/* webserver.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  next();
-});*/
+
+// если файл с запросами существует, откроем его. Иначе создадим пустой файл
+openOrCreateFileWithRequests = () => {
+  let requests;
+  // если файл с запросами существует, прочитаем его
+  if (fs.existsSync(requestsFilePath)) {
+    requests = fs.readFileSync(requestsFilePath);
+  } else {
+    // если файл с запросами не существует, создадим его базовый вариант (с пустым массивом)
+    fs.writeFileSync(requestsFilePath, JSON.stringify([]));
+    requests = fs.readFileSync(requestsFilePath);
+  }
+
+  return requests;
+};
 
 webserver.options("/test", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -33,6 +43,17 @@ webserver.get("/test", (req, res) => {
   console.log("/test service called");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.send("test service answer");
+});
+
+webserver.options("/get-requests", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.send("");
+});
+
+webserver.get("/get-requests", (req, res) => {
+  const requests = openOrCreateFileWithRequests();
+  res.send(requests);
 });
 
 webserver.options("/execute", (req, res) => {
@@ -90,8 +111,44 @@ webserver.post("/execute", async (req, res) => {
   } catch (e) {
     res.status(500).send(e.message);
   }
+});
 
-  // res.send(req.body);
+webserver.options("/save", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.send("");
+});
+
+webserver.post("/save", async (req, res) => {
+  const request = req.body;
+  let requests = openOrCreateFileWithRequests();
+  requests = JSON.parse(requests);
+  /* console.log(requests);
+  console.log(request);*/
+
+  // если перезаписываем существующий запрос
+  if (request.id !== null) {
+    for (let i = 0; i < requests.length; i++) {
+      if (requests[i].id === request.id) {
+        requests[i] = request;
+        break;
+      }
+    }
+  } else requests.push({...request, id: requests.length + 1});
+
+  console.log(requests);
+
+  fs.writeFileSync(requestsFilePath, JSON.stringify(requests));
+
+  const body = JSON.stringify({
+    // id: request.id || requests.length + 1,
+    id: request.id || requests.length,
+    requests,
+  });
+
+  res.send(body);
+
+  // res.send(request)
 });
 
 webserver.listen(port, () => {

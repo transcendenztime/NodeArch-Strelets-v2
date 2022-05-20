@@ -14,7 +14,19 @@ export default new Config().extend("webpack.base.config.js").merge({
         changeOrigin: true,
       },
 
+      "/get-requests": {
+        target: "http://localhost:4095/",
+        secure: false,
+        changeOrigin: true,
+      },
+
       "/execute": {
+        target: "http://localhost:4095/",
+        secure: false,
+        changeOrigin: true,
+      },
+
+      "/save": {
         target: "http://localhost:4095/",
         secure: false,
         changeOrigin: true,

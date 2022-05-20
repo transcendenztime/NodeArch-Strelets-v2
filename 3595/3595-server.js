@@ -58,11 +58,6 @@ const logLineSync = (logFilePath, logLine) => {
   fs.closeSync(logFd);
 };
 
-// функция нужна для того, чтобы на сервере создался файл с нулевой статистикой
-createInitialStatFile = () => {
-  fs.writeFileSync(statsFilePath, JSON.stringify(initialStatContent));
-};
-
 // если файл статистики существует, откроем его. Иначе создадим новый с нулевой статистикой.
 openOrCreateStatFile = () => {
   let stat;

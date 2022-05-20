@@ -8,6 +8,9 @@ import "./MainFlex.scss";
 const Main = () => {
   const [text, setText] = useState(null);
 
+  const [requests, setRequests] = useState([]); // список сохраненных запросов
+
+  const [id, setId] = useState(null); // id выбранного запроса
   const [URL, setURL] = useState("");
   const [requestMethod, setRequestMethod] = useState(Methods.GET);
   const [getParameters, setGetParameters] = useState([]);
@@ -15,13 +18,27 @@ const Main = () => {
   const [headers, setHeaders] = useState([]);
 
   const [isResponseExecuted, setIsResponseExecuted] = useState(false);
-  const [response, setResponse] = useState(null);
+  const [responseParams, setResponseParams] = useState(null);
+
+  const getSavedRequests = async () => {
+    let answer = await fetch("/get-requests", {
+      method: "GET",
+    });
+    answer = await answer.json();
+    setRequests(answer);
+
+    // return answer;
+  };
+
+  useEffect(() => {
+    getSavedRequests();
+  }, []);
 
   const testService = async () => {
-    const response = await fetch("/test", {
+    let answer = await fetch("/test", {
       method: Methods.GET,
     });
-    const answer = await response.text();
+    answer = await answer.text();
 
     setText(answer);
   };
@@ -29,6 +46,7 @@ const Main = () => {
   // console.log(process.env.NODE_ENV);
 
   const executeRequest = async () => {
+    // TODO добавить валидацию
     const body = {
       URL,
       requestMethod,
@@ -53,17 +71,44 @@ const Main = () => {
 
     answer = await answer.json();
     setIsResponseExecuted(true);
-    setResponse(answer);
+    setResponseParams(answer);
+  };
+
+  const saveRequest = async () => {
+    // TODO добавить валидацию
+
+    const body = {
+      id,
+      URL,
+      requestMethod,
+      headers,
+      ...(requestMethod === Methods.GET && {getParameters}),
+      ...(requestMethod === Methods.POST && {requestBody}),
+    };
+
+    let answer = await fetch("/save", {
+      method: Methods.POST,
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    answer = await answer.json();
+
+    setId(answer.id);
+    setRequests(answer.requests);
   };
 
   const clearForm = () => {
+    setId(null);
     setURL("");
     setRequestMethod(Methods.GET);
     setGetParameters([]);
     setRequestBody("");
     setHeaders([]);
     setIsResponseExecuted(false);
-    setResponse(null);
+    setResponseParams(null);
   };
 
   const parseResponseHeaders = headers => {
@@ -134,6 +179,22 @@ const Main = () => {
     setHeaders(tmpHeaders);
   };
 
+  const selectRequest = request => {
+    console.log("request: ", request);
+    // const {id, URL, requestMethod, getParameters, requestBody, headers} = request;
+    setId(request.id);
+    setURL(request.URL);
+    setRequestMethod(request.requestMethod);
+    if (request.requestMethod === Methods.GET) {
+      setGetParameters(request.getParameters);
+      setRequestBody("");
+    } else {
+      setGetParameters([]);
+      setRequestBody(request.requestBody);
+    }
+    setHeaders(request.headers);
+  };
+
   const renderTest = () => {
     return (
       <div>
@@ -149,6 +210,29 @@ const Main = () => {
           <span>Ответ от тестового сервиса: </span>
           {text}
         </div>
+      </div>
+    );
+  };
+
+  const renderRequests = () => {
+    return (
+      <div className={"Requests"}>
+        {requests.length ? (
+          requests.map((item, idd) => (
+            <div
+              key={idd}
+              onClick={() => selectRequest(item)}
+              className={`Requests__item ${item.id === id ? "Requests__item--checked" : ""}`}
+            >
+              <span className={`${item.requestMethod === Methods.GET ? "getItem" : "postItem"}`}>
+                {item.requestMethod}
+              </span>{" "}
+              <span>{item.URL}</span>
+            </div>
+          ))
+        ) : (
+          <span>Сохраненных запросов нет</span>
+        )}
       </div>
     );
   };
@@ -262,6 +346,7 @@ const Main = () => {
     return (
       <div className={"Main__buttons"}>
         <span onClick={executeRequest}>Выполнить запрос</span>
+        <span onClick={saveRequest}>{id ? "Перезаписать выбранный запрос" : "Сохранить новый запрос"}</span>
         <span onClick={clearForm}>Очистить форму</span>
       </div>
     );
@@ -270,20 +355,20 @@ const Main = () => {
   const renderResponseParams = () => {
     return (
       <div>
-        {isResponseExecuted && response && (
+        {isResponseExecuted && responseParams && (
           <div className={"Main__response"}>
             <h2>Параметры ответа:</h2>
             <div className={"Main__label"}>
-              Статус: <span>{response.status}</span>
+              Статус: <span>{responseParams.status}</span>
             </div>
             <div className={"Main__label"}>
               Заголовки: <br />
-              {<ul>{parseResponseHeaders(response.headers)}</ul>}
+              {<ul>{parseResponseHeaders(responseParams.headers)}</ul>}
             </div>
             <div className={"Main__label"}>
               Тело:
               <br />
-              <textarea defaultValue={response.data} />
+              <textarea defaultValue={responseParams.data} />
             </div>
           </div>
         )}
@@ -295,6 +380,7 @@ const Main = () => {
     <div>
       <div>Hello</div>
       {renderTest()}
+      {renderRequests()}
       <div className={"Main"}>
         <div className={"Main__data"}>
           {renderURL()}
