@@ -1,6 +1,8 @@
 import React from "react";
 import {useEffect, useState} from "react";
+
 import {HeadersNames, Methods} from "../Constants/constants";
+import {isURLValid} from "../../../utils/utils";
 
 // import "./Main.scss";
 import "./MainFlex.scss";
@@ -10,7 +12,7 @@ const Main = () => {
 
   const [requests, setRequests] = useState([]); // список сохраненных запросов
 
-  const [id, setId] = useState(null); // id выбранного запроса
+  const [requestId, setRequestId] = useState(null); // id выбранного запроса
   const [URL, setURL] = useState("");
   const [requestMethod, setRequestMethod] = useState(Methods.GET);
   const [getParameters, setGetParameters] = useState([]);
@@ -19,6 +21,8 @@ const Main = () => {
 
   const [isResponseExecuted, setIsResponseExecuted] = useState(false);
   const [responseParams, setResponseParams] = useState(null);
+
+  const [errors, setErrors] = useState({});
 
   const getSavedRequests = async () => {
     let answer = await fetch("/get-requests", {
@@ -45,8 +49,54 @@ const Main = () => {
 
   // console.log(process.env.NODE_ENV);
 
+  const isFormValid = () => {
+    let errors = {};
+    let isValid = true;
+
+    if (!URL) {
+      errors.URL = "Ввод url'a обязателен";
+      isValid = false;
+    } else if (!isURLValid(URL)) {
+      errors.URL = "Неверный URL";
+      isValid = false;
+    }
+
+    if (requestMethod === Methods.GET) {
+      errors.getParameters = {};
+      getParameters.forEach((item, id) => {
+        errors.getParameters[id] = {};
+        if (!item.key) {
+          errors.getParameters[id].key = "Ввод обязателен";
+          isValid = false;
+        }
+        if (!item.value) {
+          errors.getParameters[id].value = "Ввод обязателен";
+          isValid = false;
+        }
+      });
+    }
+
+    errors.headers = {};
+    headers.forEach((item, id) => {
+      errors.headers[id] = {};
+      if (!item.header) {
+        errors.headers[id].header = "Ввод обязателен";
+        isValid = false;
+      }
+      if (!item.value) {
+        errors.headers[id].value = "Ввод обязателен";
+        isValid = false;
+      }
+    });
+
+    setErrors(errors);
+
+    return isValid;
+  };
+
   const executeRequest = async () => {
-    // TODO добавить валидацию
+    if (!isFormValid()) return;
+
     const body = {
       URL,
       requestMethod,
@@ -75,10 +125,10 @@ const Main = () => {
   };
 
   const saveRequest = async () => {
-    // TODO добавить валидацию
+    if (!isFormValid()) return;
 
     const body = {
-      id,
+      requestId,
       URL,
       requestMethod,
       headers,
@@ -96,12 +146,12 @@ const Main = () => {
 
     answer = await answer.json();
 
-    setId(answer.id);
+    setRequestId(answer.requestId);
     setRequests(answer.requests);
   };
 
   const clearForm = () => {
-    setId(null);
+    setRequestId(null);
     setURL("");
     setRequestMethod(Methods.GET);
     setGetParameters([]);
@@ -109,6 +159,7 @@ const Main = () => {
     setHeaders([]);
     setIsResponseExecuted(false);
     setResponseParams(null);
+    setErrors({});
   };
 
   const parseResponseHeaders = headers => {
@@ -180,9 +231,8 @@ const Main = () => {
   };
 
   const selectRequest = request => {
-    console.log("request: ", request);
-    // const {id, URL, requestMethod, getParameters, requestBody, headers} = request;
-    setId(request.id);
+    // console.log("request: ", request);
+    setRequestId(request.requestId);
     setURL(request.URL);
     setRequestMethod(request.requestMethod);
     if (request.requestMethod === Methods.GET) {
@@ -193,6 +243,9 @@ const Main = () => {
       setRequestBody(request.requestBody);
     }
     setHeaders(request.headers);
+
+    setErrors({});
+    // isFormValid();
   };
 
   const renderTest = () => {
@@ -218,11 +271,11 @@ const Main = () => {
     return (
       <div className={"Requests"}>
         {requests.length ? (
-          requests.map((item, idd) => (
+          requests.map((item, id) => (
             <div
-              key={idd}
+              key={id}
               onClick={() => selectRequest(item)}
-              className={`Requests__item ${item.id === id ? "Requests__item--checked" : ""}`}
+              className={`Requests__item ${item.requestId === requestId ? "Requests__item--checked" : ""}`}
             >
               <span className={`${item.requestMethod === Methods.GET ? "getItem" : "postItem"}`}>
                 {item.requestMethod}
@@ -242,6 +295,7 @@ const Main = () => {
       <div className={"Main__data__url"}>
         <div>URL</div>
         <input type={"text"} onChange={setFieldValue} name={"URL"} value={URL} />
+        <span className={"Main__error"}>{errors.URL}</span>
       </div>
     );
   };
@@ -275,6 +329,7 @@ const Main = () => {
                     onChange={e => changeParameter(e, id)}
                     autoComplete={"off"}
                   />
+                  <span className={"Main__error"}>{errors?.getParameters?.[id]?.key}</span>
                 </div>
                 <div className={"Main__column"}>
                   <input
@@ -285,6 +340,7 @@ const Main = () => {
                     onChange={e => changeParameter(e, id)}
                     autoComplete={"off"}
                   />
+                  <span className={"Main__error"}>{errors?.getParameters?.[id]?.value}</span>
                 </div>
                 <span onClick={() => deleteParameter(id)}>Удалить</span>
               </div>
@@ -322,6 +378,7 @@ const Main = () => {
                       </option>
                     ))}
                   </select>
+                  <span className={"Main__error"}>{errors?.headers?.[id]?.header}</span>
                 </div>
                 <div className={"Main__Column"}>
                   <input
@@ -331,6 +388,7 @@ const Main = () => {
                     name={"value"}
                     onChange={e => changeHeaders(e, id)}
                   />
+                  <span className={"Main__error"}>{errors?.headers?.[id]?.value}</span>
                 </div>
                 <span onClick={() => deleteHeader(id)}>Удалить</span>
               </div>
@@ -346,7 +404,7 @@ const Main = () => {
     return (
       <div className={"Main__buttons"}>
         <span onClick={executeRequest}>Выполнить запрос</span>
-        <span onClick={saveRequest}>{id ? "Перезаписать выбранный запрос" : "Сохранить новый запрос"}</span>
+        <span onClick={saveRequest}>{requestId ? "Перезаписать выбранный запрос" : "Сохранить новый запрос"}</span>
         <span onClick={clearForm}>Очистить форму</span>
       </div>
     );

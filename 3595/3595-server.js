@@ -166,15 +166,18 @@ webserver.post("/info", (req, res) => {
       // const options = {compact: true, ignoreComment: true, spaces: 4, addParent: true};
       // const statInXml = convert.json2xml(statInJson, options);
       const statInXml = js2xmlparser.parse("stat", statInJson);
+      res.setHeader("Content-Type", acceptHeader);
       res.send(statInXml);
     } else if (acceptHeader === "text/html") {
       const statInJson = JSON.parse(stat);
       let statistics = statInJson
         .map(st => `<div><span>${st.value}: </span><span style="font-weight: bold;">${st.count}</span></div>`)
         .join(`<br />`);
+      res.setHeader("Content-Type", acceptHeader);
       res.send(statistics);
     } else if (acceptHeader === "application/json") {
       logLineSync(logFN, `[${port}] ` + "/info service success");
+      res.setHeader("Content-Type", acceptHeader);
       res.send(stat);
     } else {
       // если с фронта пришел непредусмотренный нами заголовок Accept

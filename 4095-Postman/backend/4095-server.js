@@ -18,6 +18,9 @@ const Methods = {
   POST: "POST",
 };
 
+// TODO async логирование
+// TODO валидация параметров с фронта
+
 // если файл с запросами существует, откроем его. Иначе создадим пустой файл
 openOrCreateFileWithRequests = () => {
   let requests;
@@ -127,14 +130,14 @@ webserver.post("/save", async (req, res) => {
   console.log(request);*/
 
   // если перезаписываем существующий запрос
-  if (request.id !== null) {
+  if (request.requestId !== null) {
     for (let i = 0; i < requests.length; i++) {
-      if (requests[i].id === request.id) {
+      if (requests[i].requestId === request.requestId) {
         requests[i] = request;
         break;
       }
     }
-  } else requests.push({...request, id: requests.length + 1});
+  } else requests.push({...request, requestId: requests.length + 1});
 
   console.log(requests);
 
@@ -142,7 +145,7 @@ webserver.post("/save", async (req, res) => {
 
   const body = JSON.stringify({
     // id: request.id || requests.length + 1,
-    id: request.id || requests.length,
+    requestId: request.requestId || requests.length,
     requests,
   });
 

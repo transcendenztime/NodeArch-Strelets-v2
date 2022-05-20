@@ -44,10 +44,10 @@
     // justify-content: space-between;
     flex-direction: column;
     &__url {
-      width: 70%;
+      // width: 70%;
       margin-right: 10px;
       > input {
-        width: 70%;
+        // width: 70%;
       }
     }
 
@@ -74,11 +74,17 @@
   &__block {
     display: flex;
     justify-content: space-between;
-    margin: 10px 0;
+    margin: 5px 0;
   }
 
   &__column {
     display: flex;
     flex-direction: column;
+  }
+
+  &__error {
+    display: block;
+    color: #d41f1f;
+    height: 20px;
   }
 }
