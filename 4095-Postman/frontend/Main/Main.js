@@ -3,11 +3,9 @@ import {useEffect, useState} from "react";
 import isoFetch from "isomorphic-fetch";
 
 import {HeadersNames, Methods} from "../constants/constants";
-import {isURLValid} from "../../../utils/utils";
+import {isURLValid} from "../../../utils/front-utils";
 
 import "./Main.scss";
-
-// TODO красивая верстка
 
 const Main = () => {
   const [requests, setRequests] = useState([]); // список сохраненных запросов
