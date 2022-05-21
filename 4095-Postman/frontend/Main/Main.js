@@ -141,7 +141,7 @@ const Main = () => {
 
     answer = await answer.json();
 
-    alert(`Запрос с id=${requestId} сохранен`);
+    alert(`Запрос с id=${answer.requestId} сохранен`);
 
     setRequestId(answer.requestId);
     setRequests(answer.requests);
