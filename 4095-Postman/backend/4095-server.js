@@ -137,7 +137,7 @@ webserver.post("/save-request", async (req, res) => {
           break;
         }
       }
-    } else requests.push({...request, requestId: requests[requests.length - 1].requestId + 1});
+    } else requests.push({...request, requestId: requests.length ? requests[requests.length - 1].requestId + 1 : 1});
 
     fs.writeFileSync(requestsFilePath, JSON.stringify(requests));
 
