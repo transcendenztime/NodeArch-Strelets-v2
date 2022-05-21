@@ -1,14 +1,5 @@
-input {
-  height: 19px;
-}
-
-select{
-  height: 25px;
-}
-
 #container {
-  width: 100%;
-  max-width: 1240px;
+  width: 1300px;
   padding-right: 15px;
   padding-left: 15px;
   margin-right: auto;
@@ -139,7 +130,7 @@ select{
     border: 1px solid black;
     padding: 5px;
     overflow-y: auto;
-    width: 55%;
+    width: 52%;
     margin-right: 10px;
     box-shadow: 0 5px 10px 2px #b3b0b0;
   }
@@ -151,7 +142,7 @@ select{
     border: 1px solid black;
     padding: 5px;
     overflow-y: auto;
-    width: 55%;
+    width: 52%;
     margin-right: 10px;
     box-shadow: 0 5px 10px 2px #b3b0b0;
 
@@ -168,7 +159,7 @@ select{
     border: 1px solid black;
     padding: 5px;
     overflow-y: auto;
-    width: 45%;
+    width: 48%;
     box-shadow: 0 5px 10px 2px #b3b0b0;
   }
 
@@ -234,46 +225,46 @@ select{
 
     &--blue {
       background-color: #0092f1;
-      box-shadow: 0 4px 6px 0 rgba(15, 140, 198, 0.3);
+      box-shadow: 0 4px 6px 0 rgba(15, 140, 198, 0.5);
 
       &:hover {
         background-color: #0c82cf;
-        box-shadow: 0 4px 6px 0 rgba(15, 140, 198, 0.3);
+        box-shadow: 0 4px 6px 0 rgba(15, 140, 198, 0.5);
       }
 
       &:active {
         background-color: #0c69a5;
-        box-shadow: 0 4px 6px 0 rgba(15, 140, 198, 0.3);
+        box-shadow: 0 4px 6px 0 rgba(15, 140, 198, 0.5);
       }
     }
 
     &--red {
       background-color: #d73838;
-      box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.3);
+      box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.5);
 
       &:hover {
         background-color: #cb2424;
-        box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.3);
+        box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.5);
       }
 
       &:active {
         background-color: #b31d1d;
-        box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.3);
+        box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.5);
       }
     }
 
     &--orange {
       background-color: #ff9700;
-      box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.3);
+      box-shadow: 0 4px 6px 0 rgba(255, 152, 0, 0.5);
 
       &:hover {
-        background-color: #cb2424;
-        box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.3);
+        background-color: #ed8f08;
+        box-shadow: 0 4px 6px 0 rgba(255, 152, 0, 0.5);
       }
 
       &:active {
-        background-color: #b31d1d;
-        box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.3);
+        background-color: #cb7b07;
+        box-shadow: 0 4px 6px 0 rgba(255, 152, 0, 0.5);
       }
     }
 
@@ -286,5 +277,14 @@ select{
     display: block;
     color: #d41f1f;
     height: 20px;
+    font-size: 14px;
   }
+}
+
+input {
+  height: 19px;
+}
+
+select{
+  height: 25px;
 }

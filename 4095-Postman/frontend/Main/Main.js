@@ -2,7 +2,7 @@ import React, {Fragment} from "react";
 import {useEffect, useState} from "react";
 import isoFetch from "isomorphic-fetch";
 
-import {HeadersNames, Methods} from "../Constants/constants";
+import {HeadersNames, Methods} from "../constants/constants";
 import {isURLValid} from "../../../utils/utils";
 
 import "./Main.scss";
@@ -24,14 +24,13 @@ const Main = () => {
 
   const [errors, setErrors] = useState({});
 
+  // запрашиваем сохраненные запросы
   const getSavedRequests = async () => {
     let answer = await isoFetch("/get-requests", {
       method: "GET",
     });
     answer = await answer.json();
     setRequests(answer);
-
-    // return answer;
   };
 
   useEffect(() => {
@@ -84,6 +83,7 @@ const Main = () => {
     return isValid;
   };
 
+  // отправляем на бэк параметры запроса для выполнения
   const executeRequest = async () => {
     if (!isFormValid()) return;
 
@@ -114,6 +114,7 @@ const Main = () => {
     setResponseParams(answer);
   };
 
+  // отправляем на бэк параметры запроса для сохранения
   const saveRequest = async () => {
     if (!isFormValid()) return;
 
@@ -149,7 +150,7 @@ const Main = () => {
   // удаляем запрос из сохраненных на бэке
   const deleteRequest = async () => {
     if (requestId) {
-      if (confirm("Подтверждаете удаление?")) {
+      if (confirm(`Подтверждаете удаление запроса с id=${requestId}?`)) {
         const body = {
           requestId,
         };
@@ -178,6 +179,7 @@ const Main = () => {
     }
   };
 
+  // очистка формы
   const clearForm = () => {
     setRequestId(null);
     setURL("");
@@ -190,10 +192,12 @@ const Main = () => {
     setErrors({});
   };
 
+  // очистка параметров ответа
   const clearResponseParams = () => {
     setResponseParams(null);
   };
 
+  // собираем хэдеры
   const parseResponseHeaders = headers => {
     let result = [];
     for (let key in headers) {
@@ -262,6 +266,7 @@ const Main = () => {
     setHeaders(tmpHeaders);
   };
 
+  // клик по запросу из списка сохраненных
   const selectRequest = request => {
     clearResponseParams();
     setRequestId(request.requestId);
@@ -314,7 +319,7 @@ const Main = () => {
     return (
       <div className={"Main__data-url"}>
         <div>URL</div>
-        <input type={"text"} onChange={setFieldValue} name={"URL"} value={URL} />
+        <input autoComplete={"off"} type={"text"} onChange={setFieldValue} name={"URL"} value={URL} />
         <span className={"Main__error"}>{errors.URL}</span>
       </div>
     );
@@ -415,6 +420,7 @@ const Main = () => {
                     placeholder={"Значение"}
                     value={item.value}
                     name={"value"}
+                    autoComplete={"off"}
                     onChange={e => changeHeaders(e, id)}
                   />
                   <span className={"Main__error"}>{errors?.headers?.[id]?.value}</span>
@@ -452,7 +458,9 @@ const Main = () => {
           </button>
         </div>
         <div>
-          <button className={"Main__button Main__button--green"} onClick={clearForm}>Новый запрос</button>
+          <button className={"Main__button Main__button--green"} onClick={clearForm}>
+            Новый запрос
+          </button>
         </div>
         {requestId && (
           <div>
@@ -470,25 +478,29 @@ const Main = () => {
       <Fragment>
         {isResponseExecuted && responseParams && (
           <Fragment>
-          <h2>Параметры ответа:</h2>
-          <div className={"Main__response"}>
-            <div>
-              <span className={"Main__label"}>Статус:</span> <span>{responseParams.status}</span>
+            <h2>Параметры ответа:</h2>
+            <div className={"Main__response"}>
+              <div>
+                <span className={"Main__label"}>Статус:</span> <span>{responseParams.status}</span>
+              </div>
+              <div>
+                <span className={"Main__label"}>Заголовки:</span> <br />
+                {<ul>{parseResponseHeaders(responseParams.headers)}</ul>}
+              </div>
+              <div>
+                <span className={"Main__label"}>Тело:</span>
+                <br />
+                <textarea className={"Main__response-body"} defaultValue={responseParams.data} />
+              </div>
             </div>
             <div>
-              <span className={"Main__label"}>Заголовки:</span> <br />
-              {<ul>{parseResponseHeaders(responseParams.headers)}</ul>}
+              <button className={"Main__button Main__button--red"} onClick={clearResponseParams}>
+                Очистить параметры ответа
+              </button>
             </div>
-            <div>
-              <span className={"Main__label"}>Тело:</span>
-              <br />
-              <textarea className={"Main__response-body"} defaultValue={responseParams.data} />
-            </div>
-          </div>
           </Fragment>
         )}
       </Fragment>
-
     );
   };
 

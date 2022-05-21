@@ -57,12 +57,9 @@ webserver.options("/execute", (req, res) => {
 
 webserver.post("/execute", async (req, res) => {
   console.log("/execute service called");
-  // console.log(req.body);
-
   const {URL, requestMethod, headers, getParameters, requestBody} = req.body;
 
   if (requestMethod !== Methods.GET && requestMethod !== Methods.POST) {
-  // if (requestMethod === Methods.GET || requestMethod === Methods.POST) {
     res.status(510).send("Неверный метод запроса");
   } else if(!isURLValid(URL)) {
     res.status(510).send("Неверный формат URL");
@@ -87,8 +84,6 @@ webserver.post("/execute", async (req, res) => {
       headers: reqHeaders,
       ...(requestMethod === Methods.POST && {body: requestBody}),
     };
-
-    // console.log(fetchOptions);
 
     try {
       let response = await fetch(reqURL, fetchOptions);
@@ -124,8 +119,6 @@ webserver.post("/save-request", async (req, res) => {
   try {
     let requests = openOrCreateFileWithRequests();
     requests = JSON.parse(requests);
-    /* console.log(requests);
-    console.log(request);*/
 
     // если перезаписываем существующий запрос
     if (request.requestId !== null) {
@@ -137,12 +130,9 @@ webserver.post("/save-request", async (req, res) => {
       }
     } else requests.push({...request, requestId: requests[requests.length - 1].requestId + 1});
 
-    // console.log(requests);
-
     fs.writeFileSync(requestsFilePath, JSON.stringify(requests));
 
     const body = JSON.stringify({
-      // requestId: request.requestId || requests.length,
       requestId: request.requestId || requests[requests.length - 1].requestId,
       requests,
     });
@@ -151,7 +141,6 @@ webserver.post("/save-request", async (req, res) => {
   } catch (e) {
     res.status(500).send(e.message);
   }
-  // res.send(request)
 });
 
 webserver.options("/delete-request", (req, res) => {
