@@ -1,11 +1,10 @@
-//import {isURLValid} from "../../utils/utils";
-
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
 const fs = require("fs");
 const fetch = require("node-fetch");
 
+//import {isURLValid} from "../../utils/utils";
 const { isURLValid } = require('../../utils/utils');
 
 const webserver = express();
@@ -74,8 +73,8 @@ webserver.post("/execute", async (req, res) => {
 
   const {URL, requestMethod, headers, getParameters, requestBody} = req.body;
 
-  // if (requestMethod !== Methods.GET && requestMethod !== Methods.POST) {
-  if (requestMethod === Methods.GET || requestMethod === Methods.POST) {
+  if (requestMethod !== Methods.GET && requestMethod !== Methods.POST) {
+  // if (requestMethod === Methods.GET || requestMethod === Methods.POST) {
     res.status(510).send("Неверный метод запроса");
   } else if(!isURLValid(URL)) {
     res.status(510).send("Неверный формат URL");
@@ -126,42 +125,88 @@ webserver.post("/execute", async (req, res) => {
   }
 });
 
-webserver.options("/save", (req, res) => {
+webserver.options("/save-request", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   res.send("");
 });
 
-webserver.post("/save", async (req, res) => {
+webserver.post("/save-request", async (req, res) => {
   const request = req.body;
-  let requests = openOrCreateFileWithRequests();
-  requests = JSON.parse(requests);
-  /* console.log(requests);
-  console.log(request);*/
+  try {
+    let requests = openOrCreateFileWithRequests();
+    requests = JSON.parse(requests);
+    /* console.log(requests);
+    console.log(request);*/
 
-  // если перезаписываем существующий запрос
-  if (request.requestId !== null) {
-    for (let i = 0; i < requests.length; i++) {
-      if (requests[i].requestId === request.requestId) {
-        requests[i] = request;
-        break;
+    // если перезаписываем существующий запрос
+    if (request.requestId !== null) {
+      for (let i = 0; i < requests.length; i++) {
+        if (requests[i].requestId === request.requestId) {
+          requests[i] = request;
+          break;
+        }
       }
-    }
-  } else requests.push({...request, requestId: requests.length + 1});
+    } else requests.push({...request, requestId: requests[requests.length - 1].requestId + 1});
 
-  console.log(requests);
+    // console.log(requests);
 
-  fs.writeFileSync(requestsFilePath, JSON.stringify(requests));
+    fs.writeFileSync(requestsFilePath, JSON.stringify(requests));
 
-  const body = JSON.stringify({
-    // id: request.id || requests.length + 1,
-    requestId: request.requestId || requests.length,
-    requests,
-  });
+    const body = JSON.stringify({
+      // requestId: request.requestId || requests.length,
+      requestId: request.requestId || requests[requests.length - 1].requestId,
+      requests,
+    });
 
-  res.send(body);
-
+    res.send(body);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
   // res.send(request)
+});
+
+webserver.options("/delete-request", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.send("");
+});
+
+webserver.post("/delete-request", (req, res) => {
+  const request = req.body;
+  try {
+    let requests;
+    // если файл с запросами существует, прочитаем его
+    if (fs.existsSync(requestsFilePath)) {
+      requests = fs.readFileSync(requestsFilePath);
+      requests = JSON.parse(requests);
+
+      const indexToDelete = requests.findIndex((item) => {
+        return item.requestId === request.requestId;
+      });
+
+      if (indexToDelete !== -1) {
+        // удаляем запрос
+        requests.splice(indexToDelete, 1);
+        fs.writeFileSync(requestsFilePath, JSON.stringify(requests));
+
+        const body = JSON.stringify({
+          // requestId: request.requestId || requests.length,
+          requestId: request.requestId,
+        });
+
+        res.send(body);
+      } else {
+        res.status(510).send(`Не найден запрос с requestId=${request.requestId}`);
+      }
+
+    } else {
+      // если файла нет, ответим ошибкой
+      res.status(510).send("Отсутствует файл с запросами");
+    }
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
 
 webserver.listen(port, () => {

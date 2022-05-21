@@ -1,12 +1,12 @@
 import React from "react";
 import {useEffect, useState} from "react";
+import isoFetch from "isomorphic-fetch";
 
 import {HeadersNames, Methods} from "../Constants/constants";
-// import {isURLValid} from "../../../utils/utils";
+import {isURLValid} from "../../../utils/utils";
 
 // import "./Main.scss";
 import "./MainFlex.scss";
-import {isURLValid} from "../../../utils/utils";
 
 // TODO удаление запросов (в этом случае с бэка нужно присылать не requests.length, а максимальный requestId + 1)
 // TODO красивая верстка
@@ -29,7 +29,7 @@ const Main = () => {
   const [errors, setErrors] = useState({});
 
   const getSavedRequests = async () => {
-    let answer = await fetch("/get-requests", {
+    let answer = await isoFetch("/get-requests", {
       method: "GET",
     });
     answer = await answer.json();
@@ -43,7 +43,7 @@ const Main = () => {
   }, []);
 
   const testService = async () => {
-    let answer = await fetch("/test", {
+    let answer = await isoFetch("/test", {
       method: Methods.GET,
     });
     answer = await answer.text();
@@ -53,6 +53,7 @@ const Main = () => {
 
   // console.log(process.env.NODE_ENV);
 
+  // валидация формы
   const isFormValid = () => {
     let errors = {};
     let isValid = true;
@@ -109,7 +110,7 @@ const Main = () => {
       ...(requestMethod === Methods.POST && {requestBody}),
     };
 
-    let answer = await fetch("/execute", {
+    let answer = await isoFetch("/execute", {
       method: Methods.POST,
       headers: {
         "Content-type": "application/json",
@@ -119,7 +120,7 @@ const Main = () => {
 
     if (answer.status === 500 && answer.status === 510) {
       const error = await answer.text();
-      alert(`Ошибка сервера при выполнении запроса "/execute": ${error}`);
+      alert(`При выполнении запроса "/execute" на сервере произошла ошибка: ${error}`);
       return;
     }
 
@@ -140,7 +141,7 @@ const Main = () => {
       ...(requestMethod === Methods.POST && {requestBody}),
     };
 
-    let answer = await fetch("/save", {
+    let answer = await isoFetch("/save-request", {
       method: Methods.POST,
       headers: {
         "Content-type": "application/json",
@@ -148,10 +149,47 @@ const Main = () => {
       body: JSON.stringify(body),
     });
 
+    if (answer.status === 500 && answer.status === 510) {
+      const error = await answer.text();
+      alert(`При выполнении запроса "/save-request" на сервере произошла ошибка: ${error}`);
+      return;
+    }
+
     answer = await answer.json();
 
     setRequestId(answer.requestId);
     setRequests(answer.requests);
+  };
+
+  // удаляем запрос из сохраненных на бэке
+  const deleteRequest = async () => {
+    if(requestId) {
+      const body = {
+        requestId
+      };
+
+      let answer = await isoFetch("/delete-request", {
+        method: Methods.POST,
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (answer.status === 500 || answer.status === 510) {
+        const error = await answer.text();
+        alert(`При выполнении запроса "/delete-request" на сервере произошла ошибка: ${error}`);
+        return;
+      }
+
+      answer = await answer.json();
+      clearForm();
+      getSavedRequests();
+      alert(`Запрос с id=${answer.requestId} удален`);
+
+    } else {
+      alert("Не выбран запрос для удаления");
+    }
   };
 
   const clearForm = () => {
@@ -235,7 +273,6 @@ const Main = () => {
   };
 
   const selectRequest = request => {
-    // console.log("request: ", request);
     setRequestId(request.requestId);
     setURL(request.URL);
     setRequestMethod(request.requestMethod);
@@ -249,7 +286,6 @@ const Main = () => {
     setHeaders(request.headers);
 
     setErrors({});
-    // isFormValid();
   };
 
   const renderTest = () => {
@@ -410,6 +446,9 @@ const Main = () => {
         <span onClick={executeRequest}>Выполнить запрос</span>
         <span onClick={saveRequest}>{requestId ? "Перезаписать выбранный запрос" : "Сохранить новый запрос"}</span>
         <span onClick={clearForm}>Очистить форму</span>
+        {requestId &&
+          <span onClick={deleteRequest}>Удалить выбранный запрос</span>
+        }
       </div>
     );
   };
