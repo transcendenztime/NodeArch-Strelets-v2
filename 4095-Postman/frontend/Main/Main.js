@@ -1,19 +1,15 @@
-import React from "react";
+import React, {Fragment} from "react";
 import {useEffect, useState} from "react";
 import isoFetch from "isomorphic-fetch";
 
 import {HeadersNames, Methods} from "../Constants/constants";
 import {isURLValid} from "../../../utils/utils";
 
-// import "./Main.scss";
-import "./MainFlex.scss";
+import "./Main.scss";
 
-// TODO удаление запросов (в этом случае с бэка нужно присылать не requests.length, а максимальный requestId + 1)
 // TODO красивая верстка
 
 const Main = () => {
-  const [text, setText] = useState(null);
-
   const [requests, setRequests] = useState([]); // список сохраненных запросов
 
   const [requestId, setRequestId] = useState(null); // id выбранного запроса
@@ -152,30 +148,31 @@ const Main = () => {
 
   // удаляем запрос из сохраненных на бэке
   const deleteRequest = async () => {
-    if(requestId) {
-      const body = {
-        requestId
-      };
+    if (requestId) {
+      if (confirm("Подтверждаете удаление?")) {
+        const body = {
+          requestId,
+        };
 
-      let answer = await isoFetch("/delete-request", {
-        method: Methods.POST,
-        headers: {
-          "Content-type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
+        let answer = await isoFetch("/delete-request", {
+          method: Methods.POST,
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
 
-      if (answer.status === 500 || answer.status === 510) {
-        const error = await answer.text();
-        alert(`При выполнении запроса "/delete-request" на сервере произошла ошибка: ${error}`);
-        return;
+        if (answer.status === 500 || answer.status === 510) {
+          const error = await answer.text();
+          alert(`При выполнении запроса "/delete-request" на сервере произошла ошибка: ${error}`);
+          return;
+        }
+
+        answer = await answer.json();
+        clearForm();
+        getSavedRequests();
+        alert(`Запрос с id=${answer.requestId} удален`);
       }
-
-      answer = await answer.json();
-      clearForm();
-      getSavedRequests();
-      alert(`Запрос с id=${answer.requestId} удален`);
-
     } else {
       alert("Не выбран запрос для удаления");
     }
@@ -191,6 +188,10 @@ const Main = () => {
     setIsResponseExecuted(false);
     setResponseParams(null);
     setErrors({});
+  };
+
+  const clearResponseParams = () => {
+    setResponseParams(null);
   };
 
   const parseResponseHeaders = headers => {
@@ -262,6 +263,7 @@ const Main = () => {
   };
 
   const selectRequest = request => {
+    clearResponseParams();
     setRequestId(request.requestId);
     setURL(request.URL);
     setRequestMethod(request.requestMethod);
@@ -279,18 +281,26 @@ const Main = () => {
 
   const renderRequests = () => {
     return (
-      <div className={"Requests"}>
+      <div className={"Main__requests-list"}>
         {requests.length ? (
           requests.map((item, id) => (
             <div
               key={id}
               onClick={() => selectRequest(item)}
-              className={`Requests__item ${item.requestId === requestId ? "Requests__item--checked" : ""}`}
+              className={`Main__requests-item ${
+                item.requestMethod === Methods.GET ? "Main__requests-item--get" : "Main__requests-item--post"
+              } ${item.requestId === requestId ? "Main__requests-item--checked" : ""}`}
             >
-              <span className={`${item.requestMethod === Methods.GET ? "getItem" : "postItem"}`}>
+              <span
+                className={`${
+                  item.requestMethod === Methods.GET
+                    ? "Main__method Main__method--get"
+                    : "Main__method Main__method--post"
+                }`}
+              >
                 {item.requestMethod}
-              </span>{" "}
-              <span>{item.URL}</span>
+              </span>
+              <span className={"Main__request-url"}>{item.URL}</span>
             </div>
           ))
         ) : (
@@ -302,7 +312,7 @@ const Main = () => {
 
   const renderURL = () => {
     return (
-      <div className={"Main__data__url"}>
+      <div className={"Main__data-url"}>
         <div>URL</div>
         <input type={"text"} onChange={setFieldValue} name={"URL"} value={URL} />
         <span className={"Main__error"}>{errors.URL}</span>
@@ -312,7 +322,7 @@ const Main = () => {
 
   const renderRequestMethod = () => {
     return (
-      <div className={"Main__data__requestMethod"}>
+      <div className={"Main__data-requestMethod"}>
         <div>Метод</div>
         <select onChange={setFieldValue} name={"requestMethod"} value={requestMethod}>
           <option value={Methods.GET}>GET</option>
@@ -324,7 +334,7 @@ const Main = () => {
 
   const renderGETParameters = () => {
     return (
-      <div className={"Main__getParameters"}>
+      <div className={"Main__get-parameters"}>
         <div>GET-параметры</div>
         {getParameters.length ? (
           <div>
@@ -352,21 +362,30 @@ const Main = () => {
                   />
                   <span className={"Main__error"}>{errors?.getParameters?.[id]?.value}</span>
                 </div>
-                <span onClick={() => deleteParameter(id)}>Удалить</span>
+                <div>
+                  <button
+                    className={"Main__button  Main__button--small Main__button--red"}
+                    onClick={() => deleteParameter(id)}
+                  >
+                    Удалить
+                  </button>{" "}
+                </div>
               </div>
             ))}
           </div>
         ) : null}
-        <div onClick={addParameter}>Добавить get-параметр</div>
+        <button className={"Main__button Main__button--blue"} onClick={addParameter}>
+          Добавить get-параметр
+        </button>
       </div>
     );
   };
 
   const renderBody = () => {
     return (
-      <div className={"Main_requestBody"}>
+      <div className={"Main__request-body"}>
         <div>Тело запроса</div>
-        <textarea value={requestBody} name={"requestBody"} onChange={setFieldValue} style={{width: "300px"}} />
+        <textarea value={requestBody} name={"requestBody"} onChange={setFieldValue} />
       </div>
     );
   };
@@ -378,8 +397,8 @@ const Main = () => {
           <div>
             <div>Заголовки</div>
             {headers.map((item, id) => (
-              <div key={id} className={"Main__Block"}>
-                <div className={"Main__Column"}>
+              <div key={id} className={"Main__block"}>
+                <div className={"Main__column"}>
                   <select value={item.header} onChange={e => changeHeaders(e, id)} name={"header"}>
                     <option value={""} />
                     {HeadersNames.map((header, id) => (
@@ -390,7 +409,7 @@ const Main = () => {
                   </select>
                   <span className={"Main__error"}>{errors?.headers?.[id]?.header}</span>
                 </div>
-                <div className={"Main__Column"}>
+                <div className={"Main__column"}>
                   <input
                     type={"text"}
                     placeholder={"Значение"}
@@ -400,12 +419,21 @@ const Main = () => {
                   />
                   <span className={"Main__error"}>{errors?.headers?.[id]?.value}</span>
                 </div>
-                <span onClick={() => deleteHeader(id)}>Удалить</span>
+                <div>
+                  <button
+                    className={"Main__button  Main__button--small Main__button--red"}
+                    onClick={() => deleteHeader(id)}
+                  >
+                    Удалить
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         ) : null}
-        <div onClick={addHeader}>Добавить заголовок</div>
+        <button className={"Main__button Main__button--blue"} onClick={addHeader}>
+          Добавить заголовок
+        </button>
       </div>
     );
   };
@@ -413,54 +441,80 @@ const Main = () => {
   const renderButtons = () => {
     return (
       <div className={"Main__buttons"}>
-        <span onClick={executeRequest}>Выполнить запрос</span>
-        <span onClick={saveRequest}>{requestId ? "Перезаписать выбранный запрос" : "Сохранить новый запрос"}</span>
-        <span onClick={clearForm}>Очистить форму</span>
-        {requestId &&
-          <span onClick={deleteRequest}>Удалить выбранный запрос</span>
-        }
-      </div>
-    );
-  };
-
-  const renderResponseParams = () => {
-    return (
-      <div>
-        {isResponseExecuted && responseParams && (
-          <div className={"Main__response"}>
-            <h2>Параметры ответа:</h2>
-            <div className={"Main__label"}>
-              Статус: <span>{responseParams.status}</span>
-            </div>
-            <div className={"Main__label"}>
-              Заголовки: <br />
-              {<ul>{parseResponseHeaders(responseParams.headers)}</ul>}
-            </div>
-            <div className={"Main__label"}>
-              Тело:
-              <br />
-              <textarea defaultValue={responseParams.data} />
-            </div>
+        <div>
+          <button className={"Main__button Main__button--orange"} onClick={executeRequest}>
+            Выполнить запрос
+          </button>
+        </div>
+        <div>
+          <button className={"Main__button Main__button--blue"} onClick={saveRequest}>
+            {requestId ? "Перезаписать выбранный запрос" : "Сохранить новый запрос"}
+          </button>
+        </div>
+        <div>
+          <button className={"Main__button Main__button--green"} onClick={clearForm}>Новый запрос</button>
+        </div>
+        {requestId && (
+          <div>
+            <button className={"Main__button Main__button--red"} onClick={deleteRequest}>
+              Удалить выбранный запрос
+            </button>
           </div>
         )}
       </div>
     );
   };
 
+  const renderResponseParams = () => {
+    return (
+      <Fragment>
+        {isResponseExecuted && responseParams && (
+          <Fragment>
+          <h2>Параметры ответа:</h2>
+          <div className={"Main__response"}>
+            <div>
+              <span className={"Main__label"}>Статус:</span> <span>{responseParams.status}</span>
+            </div>
+            <div>
+              <span className={"Main__label"}>Заголовки:</span> <br />
+              {<ul>{parseResponseHeaders(responseParams.headers)}</ul>}
+            </div>
+            <div>
+              <span className={"Main__label"}>Тело:</span>
+              <br />
+              <textarea className={"Main__response-body"} defaultValue={responseParams.data} />
+            </div>
+          </div>
+          </Fragment>
+        )}
+      </Fragment>
+
+    );
+  };
+
   return (
     <div>
-      <div>Hello</div>
-      {renderRequests()}
+      <div>Postman mvp</div>
       <div className={"Main"}>
-        <div className={"Main__data"}>
-          {renderURL()}
-          {renderRequestMethod()}
+        <div className={"Main__left-column"}>
+          {renderRequests()}
+          {renderButtons()}
         </div>
-        {requestMethod === Methods.GET ? renderGETParameters() : renderBody()}
-        {renderHeaders()}
+        <div className={"Main__right-column"}>
+          <h2>{requestId ? `Параметры сохраненного запроса с id=${requestId}:` : "Новый запрос"}</h2>
+          <div className={"Main__request-parameters"}>
+            <div className={"Main__data"}>
+              {renderURL()}
+              {renderRequestMethod()}
+            </div>
+            <div className={"Main__other-parameters"}>
+              {requestMethod === Methods.GET ? renderGETParameters() : renderBody()}
+              {renderHeaders()}
+            </div>
+          </div>
+          {renderResponseParams()}
+        </div>
       </div>
-      {renderButtons()}
-      {renderResponseParams()}
     </div>
   );
 };
