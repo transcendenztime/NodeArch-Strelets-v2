@@ -42,17 +42,6 @@ const Main = () => {
     getSavedRequests();
   }, []);
 
-  const testService = async () => {
-    let answer = await isoFetch("/test", {
-      method: Methods.GET,
-    });
-    answer = await answer.text();
-
-    setText(answer);
-  };
-
-  // console.log(process.env.NODE_ENV);
-
   // валидация формы
   const isFormValid = () => {
     let errors = {};
@@ -288,25 +277,6 @@ const Main = () => {
     setErrors({});
   };
 
-  const renderTest = () => {
-    return (
-      <div>
-        <input type={"button"} value={"test"} onClick={testService} />
-        <input
-          type={"button"}
-          value={"clear"}
-          onClick={() => {
-            setText(null);
-          }}
-        />
-        <div>
-          <span>Ответ от тестового сервиса: </span>
-          {text}
-        </div>
-      </div>
-    );
-  };
-
   const renderRequests = () => {
     return (
       <div className={"Requests"}>
@@ -480,7 +450,6 @@ const Main = () => {
   return (
     <div>
       <div>Hello</div>
-      {renderTest()}
       {renderRequests()}
       <div className={"Main"}>
         <div className={"Main__data"}>

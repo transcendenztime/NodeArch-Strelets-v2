@@ -38,18 +38,6 @@ openOrCreateFileWithRequests = () => {
   return requests;
 };
 
-webserver.options("/test", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.send("");
-});
-
-webserver.get("/test", (req, res) => {
-  console.log("/test service called");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.send("test service answer");
-});
-
 webserver.options("/get-requests", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");

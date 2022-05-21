@@ -8,12 +8,6 @@ export default new Config().extend("webpack.base.config.js").merge({
   devServer: {
     historyApiFallback: true,
     proxy: {
-      "/test": {
-        target: "http://localhost:4095/",
-        secure: false,
-        changeOrigin: true,
-      },
-
       "/get-requests": {
         target: "http://localhost:4095/",
         secure: false,
