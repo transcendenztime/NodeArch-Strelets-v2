@@ -285,7 +285,7 @@ const Main = () => {
   const renderRequests = () => {
     return (
       <Fragment>
-        <div className={"Main__head"}>Сохраненные запросы</div>
+        <div className={"Main__head"}>Сохраненные запросы:</div>
         <div className={"Main__requests-list"}>
           {requests.length ? (
             requests.map((item, id) => (
@@ -485,7 +485,7 @@ const Main = () => {
                 <span className={"Main__label"}>Статус:</span> <span>{responseParams.status}</span>
               </div>
               <div>
-                <div className={"Main__label"}>Заголовки:</div> <br />
+                <div className={"Main__label"}>Заголовки:</div>
                 {<ul>{parseResponseHeaders(responseParams.headers)}</ul>}
               </div>
               <div>
@@ -506,14 +506,14 @@ const Main = () => {
 
   return (
     <div>
-      <h1 className={"title"}>Postman MVP (Strelets Vadim)</h1>
+      <div className={"title"}>Postman MVP (Strelets Vadim)</div>
       <div className={"Main"}>
         <div className={"Main__left-column"}>
           {renderRequests()}
           {renderButtons()}
         </div>
         <div className={"Main__right-column"}>
-          <div className={"Main__head"}>{requestId ? `Параметры сохраненного запроса с id=${requestId}:` : "Новый запрос"}</div>
+          <div className={"Main__head"}>{requestId ? `Параметры сохраненного запроса с id=${requestId}:` : "Новый запрос:"}</div>
           <div className={"Main__request-parameters"}>
             <div className={"Main__data"}>
               {renderURL()}
