@@ -284,39 +284,42 @@ const Main = () => {
 
   const renderRequests = () => {
     return (
-      <div className={"Main__requests-list"}>
-        {requests.length ? (
-          requests.map((item, id) => (
-            <div
-              key={id}
-              onClick={() => selectRequest(item)}
-              className={`Main__requests-item ${
-                item.requestMethod === Methods.GET ? "Main__requests-item--get" : "Main__requests-item--post"
-              } ${item.requestId === requestId ? "Main__requests-item--checked" : ""}`}
-            >
-              <span
-                className={`${
-                  item.requestMethod === Methods.GET
-                    ? "Main__method Main__method--get"
-                    : "Main__method Main__method--post"
-                }`}
+      <Fragment>
+        <div className={"Main__head"}>Сохраненные запросы</div>
+        <div className={"Main__requests-list"}>
+          {requests.length ? (
+            requests.map((item, id) => (
+              <div
+                key={id}
+                onClick={() => selectRequest(item)}
+                className={`Main__requests-item ${
+                  item.requestMethod === Methods.GET ? "Main__requests-item--get" : "Main__requests-item--post"
+                } ${item.requestId === requestId ? "Main__requests-item--checked" : ""}`}
               >
-                {item.requestMethod}
-              </span>
-              <span className={"Main__request-url"}>{item.URL}</span>
-            </div>
-          ))
-        ) : (
-          <span>Сохраненных запросов нет</span>
-        )}
-      </div>
+                <span
+                  className={`${
+                    item.requestMethod === Methods.GET
+                      ? "Main__method Main__method--get"
+                      : "Main__method Main__method--post"
+                  }`}
+                >
+                  {item.requestMethod}
+                </span>
+                <span className={"Main__request-url"}>{item.URL}</span>
+              </div>
+            ))
+          ) : (
+            <div className={"Main__empty-list"}>Нет сохраненных запросов</div>
+          )}
+        </div>
+      </Fragment>
     );
   };
 
   const renderURL = () => {
     return (
       <div className={"Main__data-url"}>
-        <div>URL</div>
+        <div className={"Main__label"}>URL</div>
         <input autoComplete={"off"} type={"text"} onChange={setFieldValue} name={"URL"} value={URL} />
         <span className={"Main__error"}>{errors.URL}</span>
       </div>
@@ -326,7 +329,7 @@ const Main = () => {
   const renderRequestMethod = () => {
     return (
       <div className={"Main__data-requestMethod"}>
-        <div>Метод</div>
+        <div className={"Main__label"}>Метод</div>
         <select onChange={setFieldValue} name={"requestMethod"} value={requestMethod}>
           <option value={Methods.GET}>GET</option>
           <option value={Methods.POST}>POST</option>
@@ -335,10 +338,10 @@ const Main = () => {
     );
   };
 
-  const renderGETParameters = () => {
+  const renderGetParameters = () => {
     return (
       <div className={"Main__get-parameters"}>
-        <div>GET-параметры</div>
+        <div className={"Main__label"}>GET-параметры</div>
         {getParameters.length ? (
           <div>
             {getParameters.map((item, id) => (
@@ -387,7 +390,7 @@ const Main = () => {
   const renderBody = () => {
     return (
       <div className={"Main__request-body"}>
-        <div>Тело запроса</div>
+        <div className={"Main__label"}>Тело запроса</div>
         <textarea value={requestBody} name={"requestBody"} onChange={setFieldValue} />
       </div>
     );
@@ -396,9 +399,9 @@ const Main = () => {
   const renderHeaders = () => {
     return (
       <div className={"Main__headers"}>
+        <div className={"Main__label"}>Заголовки</div>
         {headers.length ? (
           <div>
-            <div>Заголовки</div>
             {headers.map((item, id) => (
               <div key={id} className={"Main__block"}>
                 <div className={"Main__column"}>
@@ -476,18 +479,17 @@ const Main = () => {
       <Fragment>
         {isResponseExecuted && responseParams && (
           <Fragment>
-            <h2>Параметры ответа:</h2>
+            <div className={"Main__head"}>Параметры ответа:</div>
             <div className={"Main__response"}>
               <div>
                 <span className={"Main__label"}>Статус:</span> <span>{responseParams.status}</span>
               </div>
               <div>
-                <span className={"Main__label"}>Заголовки:</span> <br />
+                <div className={"Main__label"}>Заголовки:</div> <br />
                 {<ul>{parseResponseHeaders(responseParams.headers)}</ul>}
               </div>
               <div>
-                <span className={"Main__label"}>Тело:</span>
-                <br />
+                <div className={"Main__label"}>Тело:</div>
                 <textarea className={"Main__response-body"} defaultValue={responseParams.data} />
               </div>
             </div>
@@ -504,21 +506,21 @@ const Main = () => {
 
   return (
     <div>
-      <div>Postman mvp</div>
+      <h1 className={"title"}>Postman MVP (Strelets Vadim)</h1>
       <div className={"Main"}>
         <div className={"Main__left-column"}>
           {renderRequests()}
           {renderButtons()}
         </div>
         <div className={"Main__right-column"}>
-          <h2>{requestId ? `Параметры сохраненного запроса с id=${requestId}:` : "Новый запрос"}</h2>
+          <div className={"Main__head"}>{requestId ? `Параметры сохраненного запроса с id=${requestId}:` : "Новый запрос"}</div>
           <div className={"Main__request-parameters"}>
             <div className={"Main__data"}>
               {renderURL()}
               {renderRequestMethod()}
             </div>
             <div className={"Main__other-parameters"}>
-              {requestMethod === Methods.GET ? renderGETParameters() : renderBody()}
+              {requestMethod === Methods.GET ? renderGetParameters() : renderBody()}
               {renderHeaders()}
             </div>
           </div>

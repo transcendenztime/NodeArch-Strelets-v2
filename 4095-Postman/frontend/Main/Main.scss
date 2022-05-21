@@ -6,39 +6,58 @@
   margin-left: auto;
 }
 
+.title {
+  text-align: center;
+}
+
 .Main {
   display: flex;
-  // justify-content: space-between;
-  padding: 20px 10px;
+  padding: 15px 10px;
   border: 1px solid gray;
   box-shadow: 0 5px 10px 2px #b3b0b0;
 
   &__left-column {
-    /* display: inline-block;
-    vertical-align: top;
-    width: 350px;*/
     width: 30%;
   }
 
   &__right-column {
-    /* display: inline-block;
-    vertical-align: top;*/
     width: 70%;
+  }
+
+  &__head {
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+  }
+
+  &__label {
+    font-weight: 700;
+    margin-bottom: 5px;
   }
 
   &__requests-list {
     margin-right: 20px;
     border: 1px solid black;
     height: 500px;
-    // width: 350px;
     overflow: auto;
     box-shadow: 0 5px 10px 2px #b3b0b0;
+  }
+
+  &__empty-list {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 18px;
+    font-style: italic;
   }
 
   &__requests-item {
     margin: 5px;
     cursor: pointer;
     display: flex;
+
+    &:hover {
+      background-color: #e1dbdb;
+    }
 
     &--post {
       border: 1px solid #49cc90;
@@ -50,10 +69,6 @@
       box-shadow: 0 4px 6px 0 rgba(45, 129, 87, 0.5);
     }
 
-    &:hover{
-      background-color: #e1dbdb;
-    }
-
     &--checked {
       background-color: #b3b0b0;
       box-shadow: 0 5px 10px 2px #b3b0b0;
@@ -61,7 +76,6 @@
   }
 
   &__method {
-    // border-radius: 3px;
     color: #fff;
     font-family: sans-serif;
     font-size: 14px;
@@ -78,7 +92,6 @@
     &--post {
       background-color: #49cc90;
     }
-
   }
 
   &__request-url {
@@ -92,9 +105,6 @@
   }
 
   &__data {
-    // display: flex;
-    // flex-direction: column;
-    // display: inline-block;
     height: 60px;
     padding: 5px;
     border: 1px solid black;
@@ -124,7 +134,6 @@
   }
 
   &__get-parameters {
-    // display: inline-block;
     display: inline-block;
     height: 200px;
     border: 1px solid black;
@@ -136,7 +145,6 @@
   }
 
   &__request-body {
-    // display: inline-block;
     display: inline-block;
     height: 200px;
     border: 1px solid black;
@@ -174,7 +182,7 @@
   &__response-body {
     width: 99%;
     height: 150px;
-  };
+  }
 
   &__block {
     display: flex;
@@ -205,7 +213,7 @@
     letter-spacing: normal;
     text-align: center;
     color: #fff;
-    transition: all .3s ease;
+    transition: all 0.3s ease;
     position: relative;
 
     &--green {
@@ -218,7 +226,7 @@
       }
 
       &:active {
-        background-color: #42926F;
+        background-color: #42926f;
         box-shadow: 0 4px 6px 0 rgba(45, 129, 87, 0.5);
       }
     }
@@ -285,6 +293,6 @@ input {
   height: 19px;
 }
 
-select{
+select {
   height: 25px;
 }
