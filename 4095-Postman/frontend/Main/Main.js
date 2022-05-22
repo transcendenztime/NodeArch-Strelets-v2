@@ -20,6 +20,8 @@ const Main = () => {
   const [isResponseExecuted, setIsResponseExecuted] = useState(false);
   const [responseParams, setResponseParams] = useState(null);
 
+  // const [photo, setPhoto] = useState(null);
+
   const [errors, setErrors] = useState({});
 
   // запрашиваем сохраненные запросы
@@ -34,6 +36,10 @@ const Main = () => {
   useEffect(() => {
     getSavedRequests();
   }, []);
+
+  const utf8_to_b64 = (str) => {
+    return window.btoa(unescape(encodeURIComponent(str)));
+  };
 
   // валидация формы
   const isFormValid = () => {
@@ -101,13 +107,27 @@ const Main = () => {
       body: JSON.stringify(body),
     });
 
-    if (answer.status === 500 && answer.status === 510) {
+    if (answer.status === 500 || answer.status === 510) {
       const error = await answer.text();
       alert(`При выполнении запроса "/execute" на сервере произошла ошибка: ${error}`);
       return;
     }
 
     answer = await answer.json();
+
+    /* const blob = await answer.data.blob();
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => setPhoto(reader.result)*/
+
+    /* const encodedData = utf8_to_b64(answer.data);
+    const htmlstr = "data:image/png;base64," + encodedData;
+    setPhoto(encodedData);*/
+
+    /* let image = new Image();
+    image.src = answer.data;
+    answer.data = image;*/
+
     setIsResponseExecuted(true);
     setResponseParams(answer);
   };
@@ -133,7 +153,7 @@ const Main = () => {
       body: JSON.stringify(body),
     });
 
-    if (answer.status === 500 && answer.status === 510) {
+    if (answer.status === 500 || answer.status === 510) {
       const error = await answer.text();
       alert(`При выполнении запроса "/save-request" на сервере произошла ошибка: ${error}`);
       return;
