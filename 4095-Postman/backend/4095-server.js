@@ -100,7 +100,7 @@ webserver.post("/execute", async (req, res) => {
       }
 
       // определяем, является ли response изображением
-      if (response.headers.get("content-type").includes("image")) {
+      if (response?.headers?.get("content-type")?.includes("image")) {
         isImg = true;
       }
 
