@@ -187,6 +187,13 @@
     height: 150px;
   }
 
+  &__response-image {
+    text-align: center;
+    > img {
+      max-height: 400px;
+    }
+  }
+
   &__block {
     display: flex;
     justify-content: space-between;

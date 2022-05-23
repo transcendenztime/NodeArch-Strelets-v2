@@ -20,8 +20,6 @@ const Main = () => {
   const [isResponseExecuted, setIsResponseExecuted] = useState(false);
   const [responseParams, setResponseParams] = useState(null);
 
-  // const [photo, setPhoto] = useState(null);
-
   const [errors, setErrors] = useState({});
 
   // запрашиваем сохраненные запросы
@@ -36,10 +34,6 @@ const Main = () => {
   useEffect(() => {
     getSavedRequests();
   }, []);
-
-  const utf8_to_b64 = (str) => {
-    return window.btoa(unescape(encodeURIComponent(str)));
-  };
 
   // валидация формы
   const isFormValid = () => {
@@ -114,19 +108,6 @@ const Main = () => {
     }
 
     answer = await answer.json();
-
-    /* const blob = await answer.data.blob();
-    const reader = new FileReader();
-    reader.readAsDataURL(blob);
-    reader.onloadend = () => setPhoto(reader.result)*/
-
-    /* const encodedData = utf8_to_b64(answer.data);
-    const htmlstr = "data:image/png;base64," + encodedData;
-    setPhoto(encodedData);*/
-
-    /* let image = new Image();
-    image.src = answer.data;
-    answer.data = image;*/
 
     setIsResponseExecuted(true);
     setResponseParams(answer);
@@ -512,7 +493,13 @@ const Main = () => {
               </div>
               <div>
                 <div className={"Main__label"}>Тело:</div>
-                <textarea className={"Main__response-body"} defaultValue={responseParams.data} />
+                {responseParams?.isImg ? (
+                  <div className={"Main__response-image"}>
+                    <img src={responseParams.data} />
+                  </div>
+                ) : (
+                  <textarea className={"Main__response-body"} defaultValue={responseParams.data} />
+                )}
               </div>
             </div>
             <div>
@@ -535,7 +522,9 @@ const Main = () => {
           {renderButtons()}
         </div>
         <div className={"Main__right-column"}>
-          <div className={"Main__head"}>{requestId ? `Параметры сохраненного запроса с id=${requestId}:` : "Новый запрос:"}</div>
+          <div className={"Main__head"}>
+            {requestId ? `Параметры сохраненного запроса с id=${requestId}:` : "Новый запрос:"}
+          </div>
           <div className={"Main__request-parameters"}>
             <div className={"Main__data"}>
               {renderURL()}

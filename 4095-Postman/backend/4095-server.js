@@ -4,7 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const fetch = require("node-fetch");
 
-const { isURLValid, logLineAsync } = require('../../utils/back-utils');
+const {isURLValid, logLineAsync} = require("../../utils/back-utils");
 
 const webserver = express();
 
@@ -45,7 +45,7 @@ webserver.options("/get-requests", (req, res) => {
 
 webserver.get("/get-requests", (req, res) => {
   logLineAsync(logFN, `[${port}] ` + "/get-request service called");
-  res.setHeader("Access-Control-Allow-Origin","*");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   const requests = openOrCreateFileWithRequests();
   res.send(requests);
 });
@@ -58,13 +58,13 @@ webserver.options("/execute", (req, res) => {
 
 webserver.post("/execute", async (req, res) => {
   logLineAsync(logFN, `[${port}] ` + "/execute service called");
-  res.setHeader("Access-Control-Allow-Origin","*");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   const {URL, requestMethod, headers, getParameters, requestBody} = req.body;
 
   if (requestMethod !== Methods.GET && requestMethod !== Methods.POST) {
     logLineAsync(logFN, `[${port}] ` + "/execute service error: wrong request method");
     res.status(510).send("Неверный метод запроса");
-  } else if(!isURLValid(URL)) {
+  } else if (!isURLValid(URL)) {
     logLineAsync(logFN, `[${port}] ` + "/execute service error: wrong url format");
     res.status(510).send("Неверный формат URL");
   } else {
@@ -83,27 +83,42 @@ webserver.post("/execute", async (req, res) => {
       reqHeaders[item.header] = item.value;
     });
 
-    let fetchOptions = {
-      method: requestMethod,
-      headers: reqHeaders,
-      ...(requestMethod === Methods.POST && {body: requestBody}),
-    };
-
     try {
+      let fetchOptions = {
+        method: requestMethod,
+        headers: reqHeaders,
+        ...(requestMethod === Methods.POST && {body: requestBody}),
+      };
+
       let response = await fetch(reqURL, fetchOptions);
 
       const headersRow = response.headers.raw();
       let resHeaders = {};
+      let isImg = false;
       for (let key in headersRow) {
         resHeaders[key] = response.headers.get(key);
+      }
+
+      // определяем, является ли response изображением
+      if (response.headers.get("content-type").includes("image")) {
+        isImg = true;
       }
 
       let result = {
         status: response.status,
         headers: resHeaders,
+        isImg,
       };
 
-      result.data = await response.text();
+      if (isImg) {
+        result.data =
+          "data:" +
+          response.headers.get("content-type") +
+          ";base64," +
+          new Buffer.from(await response.arrayBuffer(), "binary").toString("base64");
+      } else {
+        result.data = await response.text();
+      }
 
       logLineAsync(logFN, `[${port}] service executed [ method: ${requestMethod} | url: ${URL} ]`);
 
@@ -123,7 +138,7 @@ webserver.options("/save-request", (req, res) => {
 
 webserver.post("/save-request", async (req, res) => {
   logLineAsync(logFN, `[${port}] ` + "/save-request service called");
-  res.setHeader("Access-Control-Allow-Origin","*");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   const request = req.body;
   try {
     let requests = openOrCreateFileWithRequests();
@@ -163,7 +178,7 @@ webserver.options("/delete-request", (req, res) => {
 
 webserver.post("/delete-request", (req, res) => {
   logLineAsync(logFN, `[${port}] ` + "/delete-request service called");
-  res.setHeader("Access-Control-Allow-Origin","*");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   const request = req.body;
   try {
     let requests;
@@ -172,7 +187,7 @@ webserver.post("/delete-request", (req, res) => {
       requests = fs.readFileSync(requestsFilePath);
       requests = JSON.parse(requests);
 
-      const indexToDelete = requests.findIndex((item) => {
+      const indexToDelete = requests.findIndex(item => {
         return item.requestId === request.requestId;
       });
 
@@ -191,7 +206,6 @@ webserver.post("/delete-request", (req, res) => {
         logLineAsync(logFN, `[${port}] ` + "/delete-request service error: wrong requestId");
         res.status(510).send(`Не найден запрос с requestId=${request.requestId}`);
       }
-
     } else {
       logLineAsync(logFN, `[${port}] ` + "/delete-request service error: _requests.json file not found");
       // если файла нет, ответим ошибкой
@@ -204,5 +218,5 @@ webserver.post("/delete-request", (req, res) => {
 });
 
 webserver.listen(port, () => {
-  logLineAsync(logFN,"web server running on port "+port);
+  logLineAsync(logFN, "web server running on port " + port);
 });
