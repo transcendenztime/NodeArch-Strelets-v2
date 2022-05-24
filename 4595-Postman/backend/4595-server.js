@@ -1,17 +1,35 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const path = require("path");
-const fs = require("fs");
-const fetch = require("node-fetch");
+import {isURLValid, logLineAsync} from "../../utils/back-utils.mjs";
 
-const {isURLValid, logLineAsync} = require("../../utils/back-utils");
+/* import {createRequireFromPath as createRequire} from 'module';
+import {fileURLToPath as fromPath} from 'url';
+const require = createRequire(fromPath(import.meta.url));*/
+
+// const express = require("express");
+// const bodyParser = require("body-parser");
+// const path = require("path");
+// const fs = require("fs");
+// const fetch = require("node-fetch");
+
+import bodyParser from "body-parser";
+import path from "path";
+import fs from "fs";
+// import assert from "assert";
+import { strict as assert } from 'node:assert';
+import express from "express";
+import fetch from "node-fetch";
+
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const webserver = express();
 
 webserver.use(express.static(path.join(__dirname, "../frontend/public")));
 webserver.use(bodyParser.json());
 
-const port = 4095;
+const port = 4595;
 const logFN = path.join(__dirname, "_server.log");
 const jsonFilesPath = "jsonFiles";
 const requestsFilePath = path.join(jsonFilesPath, "_requests.json");
@@ -62,6 +80,7 @@ webserver.post("/execute", async (req, res) => {
   const {URL, requestMethod, headers, getParameters, requestBody} = req.body;
 
   if (requestMethod !== Methods.GET && requestMethod !== Methods.POST) {
+  // if(assert.notEqual(requestMethod, Methods.GET) && assert.notEqual(requestMethod, Methods.POST)) {
     logLineAsync(logFN, `[${port}] ` + "/execute service error: wrong request method");
     res.status(510).send("Неверный метод запроса");
   } else if (!isURLValid(URL)) {
