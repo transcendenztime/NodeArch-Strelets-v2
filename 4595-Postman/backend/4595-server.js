@@ -25,34 +25,7 @@ webserver.use(bodyParser.json());
 const port = 4595;
 const logFN = path.join(__dirname, "_server.log");
 const requestsFilePath = path.join(jsonFilesPath, "_requests.json");
-
-webserver.options("/test", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.send("");
-});
-
-webserver.get("/test", (req, res) => {
-  logLineAsync(logFN, `[${port}] ` + "/test service called");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-
-  /* let source = "<p>Hello, my name is {{name}}. I am from {{hometown}}. I have " +
-    "{{kids.length}} kids:</p>" +
-    "<ul>{{#kids}}<li>{{name}} is {{age}}</li>{{/kids}}</ul>";
-  let template = handlebars.compile(source);
-
-  let data = { "name": "Alan", "hometown": "Somewhere, TX",
-    "kids": [{"name": "Jimmy", "age": "12"}, {"name": "Sally", "age": "4"}]};
-  let result = template(data);*/
-  const viewString = fs.readFileSync(path.join(__dirname, "views", "test_page.handlebars"), "utf8"); // шаблон страницы тенниса
-  const viewTemplate = handlebars.compile(viewString); // получаем функцию, умеющую сформировать итоговый html на основе параметров
-  const result = viewTemplate({
-    // вызываем эту функцию, передавая уже конкретные параметры
-    hello: "теннисистам",
-  });
-  console.log(result);
-  res.send(result);
-});
+const templateFilePath = path.join(__dirname, "views", "response.handlebars");
 
 webserver.options("/get-requests", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -91,7 +64,7 @@ webserver.post("/execute", async (req, res) => {
       reqURL = reqURL + "?" + params;
     }
 
-    // собираем хедеры
+    // собираем хедеры запроса
     let reqHeaders = {};
     headers.forEach(item => {
       reqHeaders[item.header] = item.value;
@@ -106,10 +79,11 @@ webserver.post("/execute", async (req, res) => {
     let response = await fetch(reqURL, fetchOptions);
 
     const headersRow = response.headers.raw();
-    let resHeaders = {};
+
+    let resHeaders = [];
     let isImg = false;
     for (let key in headersRow) {
-      resHeaders[key] = response.headers.get(key);
+      resHeaders.push(`${key}: ${response.headers.get(key)}`);
     }
 
     // определяем, является ли response изображением
@@ -135,7 +109,18 @@ webserver.post("/execute", async (req, res) => {
 
     logLineAsync(logFN, `[${port}] service executed [ method: ${requestMethod} | url: ${URL} ]`);
 
-    res.send(JSON.stringify(result));
+    // формируем ответ на фронт шаблонизатором
+    const viewString = fs.readFileSync(templateFilePath, "utf8"); // шаблон для ответа сервера
+    const viewTemplate = handlebars.compile(viewString); // получаем функцию, умеющую сформировать итоговый html на основе параметров
+    const resultHTML = viewTemplate({
+      // вызываем эту функцию, передавая уже конкретные параметры
+      status: result.status,
+      headers: result.headers,
+      isImg,
+      data: result.data,
+    });
+
+    res.send(resultHTML);
   } catch (e) {
     logLineAsync(logFN, `[${port}] /execute service error: ${e.message}`);
     res.status(500).send(e.message);

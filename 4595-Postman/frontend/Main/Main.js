@@ -31,12 +31,6 @@ const Main = () => {
     setRequests(answer);
   };
 
-  const testRequest = async () => {
-    await isoFetch("/test", {
-      method: "GET",
-    });
-  };
-
   useEffect(() => {
     getSavedRequests();
   }, []);
@@ -113,10 +107,13 @@ const Main = () => {
       return;
     }
 
-    answer = await answer.json();
+    // answer = await answer.json();
+
+    answer = await answer.text();
 
     setIsResponseExecuted(true);
     setResponseParams(answer);
+    // setResponseParams(answer.body);
   };
 
   // отправляем на бэк параметры запроса для сохранения
@@ -479,11 +476,6 @@ const Main = () => {
             </button>
           </div>
         )}
-        <div>
-          <button className={"Main__button Main__button--green"} onClick={testRequest}>
-            Тест шаблонов
-          </button>
-        </div>
       </div>
     );
   };
@@ -494,25 +486,7 @@ const Main = () => {
         {isResponseExecuted && responseParams && (
           <Fragment>
             <div className={"Main__head"}>Параметры ответа:</div>
-            <div className={"Main__response"}>
-              <div>
-                <span className={"Main__label"}>Статус:</span> <span>{responseParams.status}</span>
-              </div>
-              <div>
-                <div className={"Main__label"}>Заголовки:</div>
-                {<ul>{parseResponseHeaders(responseParams.headers)}</ul>}
-              </div>
-              <div>
-                <div className={"Main__label"}>Тело:</div>
-                {responseParams?.isImg ? (
-                  <div className={"Main__response-image"}>
-                    <img src={responseParams.data} />
-                  </div>
-                ) : (
-                  <textarea className={"Main__response-body"} defaultValue={responseParams.data} />
-                )}
-              </div>
-            </div>
+            {<div dangerouslySetInnerHTML={{__html: responseParams}} />}
             <div>
               <button className={"Main__button Main__button--red"} onClick={clearResponseParams}>
                 Очистить параметры ответа
@@ -526,7 +500,7 @@ const Main = () => {
 
   return (
     <div>
-      <div className={"title"}>Postman MVP (Strelets Vadim)</div>
+      <div className={"title"}>Postman ver. 0.2.0 (Strelets Vadim)</div>
       <div className={"Main"}>
         <div className={"Main__left-column"}>
           {renderRequests()}

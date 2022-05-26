@@ -1,0 +1,26 @@
+<div class="Main__response">
+  <div>
+    <span class="Main__label">Статус:</span>
+    <span>{{status}}</span>
+  </div>
+  <div>
+    <div class="Main__label">Заголовки:</div>
+    <ul style="list-style-type: square">
+      {{#each headers}}
+        <li>
+          {{this}}
+        </li>
+      {{/each}}
+    </ul>
+  </div>
+  <div>
+    <div class="Main__label">Тело:</div>
+    {{#if isImg}}
+      <div class="Main__response-image">
+        <img src={{data}} />
+      </div>
+    {{else}}
+      <textarea class="Main__response-body">{{data}}</textarea>
+    {{/if}}
+  </div>
+</div>
