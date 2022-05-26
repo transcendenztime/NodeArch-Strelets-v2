@@ -1,25 +1,18 @@
-import {isURLValid, logLineAsync} from "../../utils/back-utils.mjs";
-
-/* import {createRequireFromPath as createRequire} from 'module';
-import {fileURLToPath as fromPath} from 'url';
-const require = createRequire(fromPath(import.meta.url));*/
-
-// const express = require("express");
-// const bodyParser = require("body-parser");
-// const path = require("path");
-// const fs = require("fs");
-// const fetch = require("node-fetch");
-
 import bodyParser from "body-parser";
 import path from "path";
 import fs from "fs";
 // import assert from "assert";
-import { strict as assert } from 'node:assert';
+import {strict as assert} from "node:assert";
 import express from "express";
 import fetch from "node-fetch";
 
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import handlebars from "handlebars";
+
+import {fileURLToPath} from "url";
+import {dirname} from "path";
+
+import {logLineAsync, openOrCreateFile} from "./utils/utils.js";
+import {jsonFilesPath, regExpForUrl, Methods} from "./constants/constants.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,29 +24,35 @@ webserver.use(bodyParser.json());
 
 const port = 4595;
 const logFN = path.join(__dirname, "_server.log");
-const jsonFilesPath = "jsonFiles";
 const requestsFilePath = path.join(jsonFilesPath, "_requests.json");
 
-const Methods = {
-  GET: "GET",
-  POST: "POST",
-};
+webserver.options("/test", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.send("");
+});
 
-// если файл с запросами существует, откроем его. Иначе создадим пустой файл
-const openOrCreateFileWithRequests = () => {
-  let requests;
-  // если файл с запросами существует, прочитаем его
-  if (fs.existsSync(requestsFilePath)) {
-    requests = fs.readFileSync(requestsFilePath);
-  } else {
-    // если файл с запросами не существует, создадим его базовый вариант (с пустым массивом)
-    fs.writeFileSync(requestsFilePath, JSON.stringify([]));
-    requests = fs.readFileSync(requestsFilePath);
-    logLineAsync(logFN, `[${port}] ` + "empty _requests.json file created");
-  }
+webserver.get("/test", (req, res) => {
+  logLineAsync(logFN, `[${port}] ` + "/test service called");
+  res.setHeader("Access-Control-Allow-Origin", "*");
 
-  return requests;
-};
+  /* let source = "<p>Hello, my name is {{name}}. I am from {{hometown}}. I have " +
+    "{{kids.length}} kids:</p>" +
+    "<ul>{{#kids}}<li>{{name}} is {{age}}</li>{{/kids}}</ul>";
+  let template = handlebars.compile(source);
+
+  let data = { "name": "Alan", "hometown": "Somewhere, TX",
+    "kids": [{"name": "Jimmy", "age": "12"}, {"name": "Sally", "age": "4"}]};
+  let result = template(data);*/
+  const viewString = fs.readFileSync(path.join(__dirname, "views", "test_page.handlebars"), "utf8"); // шаблон страницы тенниса
+  const viewTemplate = handlebars.compile(viewString); // получаем функцию, умеющую сформировать итоговый html на основе параметров
+  const result = viewTemplate({
+    // вызываем эту функцию, передавая уже конкретные параметры
+    hello: "теннисистам",
+  });
+  console.log(result);
+  res.send(result);
+});
 
 webserver.options("/get-requests", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -64,7 +63,7 @@ webserver.options("/get-requests", (req, res) => {
 webserver.get("/get-requests", (req, res) => {
   logLineAsync(logFN, `[${port}] ` + "/get-request service called");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  const requests = openOrCreateFileWithRequests();
+  const requests = openOrCreateFile(requestsFilePath, [], logFN, port);
   res.send(requests);
 });
 
@@ -79,14 +78,10 @@ webserver.post("/execute", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   const {URL, requestMethod, headers, getParameters, requestBody} = req.body;
 
-  if (requestMethod !== Methods.GET && requestMethod !== Methods.POST) {
-  // if(assert.notEqual(requestMethod, Methods.GET) && assert.notEqual(requestMethod, Methods.POST)) {
-    logLineAsync(logFN, `[${port}] ` + "/execute service error: wrong request method");
-    res.status(510).send("Неверный метод запроса");
-  } else if (!isURLValid(URL)) {
-    logLineAsync(logFN, `[${port}] ` + "/execute service error: wrong url format");
-    res.status(510).send("Неверный формат URL");
-  } else {
+  try {
+    assert(requestMethod === Methods.GET || requestMethod === Methods.POST, "Неверный метод запроса");
+    assert.match(URL, regExpForUrl, "Неверный формат URL");
+
     let reqURL = URL;
     // если пришли get-параметры, добавим их к урлу
     if (getParameters?.length) {
@@ -102,50 +97,48 @@ webserver.post("/execute", async (req, res) => {
       reqHeaders[item.header] = item.value;
     });
 
-    try {
-      let fetchOptions = {
-        method: requestMethod,
-        headers: reqHeaders,
-        ...(requestMethod === Methods.POST && {body: requestBody}),
-      };
+    let fetchOptions = {
+      method: requestMethod,
+      headers: reqHeaders,
+      ...(requestMethod === Methods.POST && {body: requestBody}),
+    };
 
-      let response = await fetch(reqURL, fetchOptions);
+    let response = await fetch(reqURL, fetchOptions);
 
-      const headersRow = response.headers.raw();
-      let resHeaders = {};
-      let isImg = false;
-      for (let key in headersRow) {
-        resHeaders[key] = response.headers.get(key);
-      }
-
-      // определяем, является ли response изображением
-      if (response?.headers?.get("content-type")?.includes("image")) {
-        isImg = true;
-      }
-
-      let result = {
-        status: response.status,
-        headers: resHeaders,
-        isImg,
-      };
-
-      if (isImg) {
-        result.data =
-          "data:" +
-          response.headers.get("content-type") +
-          ";base64," +
-          new Buffer.from(await response.arrayBuffer(), "binary").toString("base64");
-      } else {
-        result.data = await response.text();
-      }
-
-      logLineAsync(logFN, `[${port}] service executed [ method: ${requestMethod} | url: ${URL} ]`);
-
-      res.send(JSON.stringify(result));
-    } catch (e) {
-      logLineAsync(logFN, `[${port}] /execute service error: ${e.message}`);
-      res.status(500).send(e.message);
+    const headersRow = response.headers.raw();
+    let resHeaders = {};
+    let isImg = false;
+    for (let key in headersRow) {
+      resHeaders[key] = response.headers.get(key);
     }
+
+    // определяем, является ли response изображением
+    if (response?.headers?.get("content-type")?.includes("image")) {
+      isImg = true;
+    }
+
+    let result = {
+      status: response.status,
+      headers: resHeaders,
+      isImg,
+    };
+
+    if (isImg) {
+      result.data =
+        "data:" +
+        response.headers.get("content-type") +
+        ";base64," +
+        new Buffer.from(await response.arrayBuffer(), "binary").toString("base64");
+    } else {
+      result.data = await response.text();
+    }
+
+    logLineAsync(logFN, `[${port}] service executed [ method: ${requestMethod} | url: ${URL} ]`);
+
+    res.send(JSON.stringify(result));
+  } catch (e) {
+    logLineAsync(logFN, `[${port}] /execute service error: ${e.message}`);
+    res.status(500).send(e.message);
   }
 });
 
@@ -160,7 +153,7 @@ webserver.post("/save-request", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   const request = req.body;
   try {
-    let requests = openOrCreateFileWithRequests();
+    let requests = openOrCreateFile(requestsFilePath, [], logFN, port);
     requests = JSON.parse(requests);
 
     // если перезаписываем существующий запрос

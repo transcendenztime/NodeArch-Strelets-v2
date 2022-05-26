@@ -31,6 +31,12 @@ export default new Config().extend("webpack.base.config.js").merge({
         secure: false,
         changeOrigin: true,
       },
+
+      "/test": {
+        target: "http://localhost:4595/",
+        secure: false,
+        changeOrigin: true,
+      },
     },
   },
 });

@@ -31,6 +31,12 @@ const Main = () => {
     setRequests(answer);
   };
 
+  const testRequest = async () => {
+    await isoFetch("/test", {
+      method: "GET",
+    });
+  };
+
   useEffect(() => {
     getSavedRequests();
   }, []);
@@ -473,6 +479,11 @@ const Main = () => {
             </button>
           </div>
         )}
+        <div>
+          <button className={"Main__button Main__button--green"} onClick={testRequest}>
+            Тест шаблонов
+          </button>
+        </div>
       </div>
     );
   };
