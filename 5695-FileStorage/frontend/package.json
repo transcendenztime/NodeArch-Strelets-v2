@@ -1,15 +1,15 @@
 {
-  "name": "4595-postman",
+  "name": "5695-postman",
   "version": "1.0.0",
-  "description": "frontend for postman hometask",
+  "description": "frontend for FileStorage hometask",
   "main": "index.js",
   "scripts": {
     "builddev": "cross-env NODE_ENV=development ./node_modules/.bin/webpack-dev-server --progress --colors",
     "buildprod": "cross-env NODE_ENV=production ./node_modules/.bin/webpack --progress"
   },
   "keywords": [
-    "4595",
-    "postman"
+    "5695",
+    "FileStorage"
   ],
   "author": "Strelets Vadim",
   "license": "ISC",
