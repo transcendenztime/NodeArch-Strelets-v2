@@ -20,7 +20,6 @@ const Reset = "\x1b[0m";
 let pathToDir = process.argv[2];
 
 async function do_gzip(input, output) {
-  // console.log(`Начинаем сжимать файл ${input}`);
   console.log("Начинаем сжимать файл", FgBlue, input, Reset);
 
   const gzip = createGzip();
@@ -31,7 +30,7 @@ async function do_gzip(input, output) {
   console.log("Получен сжатый файл", FgRed, output, Reset);
 }
 
-const showAllFiles = async dir => {
+const compressor = async dir => {
   try {
     // читаем содержимое папки
     const objects = await fsp.readdir(dir);
@@ -51,10 +50,10 @@ const showAllFiles = async dir => {
           const originalFileStat = await fsp.stat(fullPathToObject);
           const originalFileChangeDate = originalFileStat.mtimeMs; // время последней модификации оригинального файла
           const gzFileStat = await fsp.stat(`${fullPathToObject}.gz`);
-          const gzFileCreationDate = gzFileStat.mtimeMs; // время последней модификации сжатого файла
+          const gzFileChangeDate = gzFileStat.mtimeMs; // время последней модификации сжатого файла
           // console.log(`Дата редактирования оригинального файла ${fullPathToObject} = ${originalFileChangeDate}`);
-          // console.log(`Дата редактирования сжатого файла ${fullPathToObject}.gz = ${gzFileCreationDate}`);
-          if (originalFileChangeDate > gzFileCreationDate) {
+          // console.log(`Дата редактирования сжатого файла ${fullPathToObject}.gz = ${gzFileChangeDate}`);
+          if (originalFileChangeDate > gzFileChangeDate) {
             // если сжатая версия этого файла устарела, пересоздадим ее
             // console.log("Обнаружили",FgMagenta, "устаревший", Reset, "сжатый файл", FgRed, `${fullPathToObject}.gz`, Reset, "Нужно пересоздать");
             console.log("Сжатый файл", FgRed, `${fullPathToObject}.gz`, FgMagenta, "устарел", Reset);
@@ -67,7 +66,7 @@ const showAllFiles = async dir => {
       } else if (stat.isDirectory()) {
         // если обнаружили папку, сканируем ее (рукурсивно вызываем функцию сканирования)
         console.log("Обнаружили папку", FgGreen, fullPathToObject, Reset);
-        await showAllFiles(fullPathToObject);
+        await compressor(fullPathToObject);
       }
     }
   } catch (e) {
@@ -76,4 +75,4 @@ const showAllFiles = async dir => {
   }
 };
 
-showAllFiles(pathToDir);
+compressor(pathToDir);
