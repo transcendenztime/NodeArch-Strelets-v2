@@ -23,6 +23,11 @@ export default new Config().extend("webpack.base.config.js").merge({
         secure: false,
         changeOrigin: true,
       },
+      "/download-file": {
+        target: "http://localhost:5695/",
+        secure: false,
+        changeOrigin: true,
+      },
     }
   },
 });

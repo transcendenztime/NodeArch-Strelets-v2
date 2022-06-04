@@ -97,6 +97,38 @@ const Main = () => {
     scrollToSelectedFile();
   };
 
+  // скачиваем файл
+  const downloadFile = async () => {
+    if (selectedFileId) {
+      const body = {
+        id: selectedFileId,
+      };
+
+      let answer = await isoFetch("/download-file", {
+        method: Methods.POST,
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const file = uploadedFiles.find((item) => {
+        return item.id === selectedFileId;
+      });
+
+      const fileBlob = await answer.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(fileBlob);
+      link.download = file.originalName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } else {
+      alert("Не выбран файл для скачивания");
+    }
+  };
+
   // удаляем сохраненный файл
   const deleteFile = async () => {
     if (selectedFileId) {
@@ -123,6 +155,7 @@ const Main = () => {
         alert(`Файл с id=${answer.id} удален`);
 
         setSelectedFileComment("");
+        setSelectedFileId(null);
         await getUploadedFiles();
       }
     } else {
@@ -148,7 +181,7 @@ const Main = () => {
               </div>
             ))
           ) : (
-            <div className={"Main__empty-list"}>Нет сохраненных файлов</div>
+            <div className={"Main__empty-list"}>Нет загруженных файлов</div>
           )}
         </div>
       </Fragment>
@@ -158,6 +191,13 @@ const Main = () => {
   const renderButtons = () => {
     return (
       <div className={"Main__buttons"}>
+        {selectedFileId &&
+          <div>
+            <button className={"Main__button Main__button--blue"} onClick={downloadFile}>
+              Скачать выбранный файл
+            </button>
+          </div>
+        }
         {selectedFileId && (
           <div>
             <button className={"Main__button Main__button--red"} onClick={deleteFile}>

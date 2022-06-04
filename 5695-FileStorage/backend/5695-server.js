@@ -10,6 +10,7 @@ const {openOrCreateFilePr, logLineAsync, getRandomFileName} = require("../../uti
 const webserver = express();
 
 webserver.use(express.static(path.join(__dirname, "../frontend/public")));
+// webserver.use(express.urlencoded({extended: true}));
 webserver.use(bodyParser.json());
 
 const port = 5695;
@@ -33,6 +34,7 @@ webserver.get("/get-files", async (req, res) => {
     res.send(files);
   } catch (e) {
     res.status(500).send(e.message);
+    logLineAsync(logFN, `[${port}] /get-files service error: ${e.message}`);
   }
 });
 
@@ -160,9 +162,10 @@ webserver.post("/delete-file", async (req, res) => {
     });
 
     if (indexToDelete !== -1) {
-      // удаляем запрос
+      // удаляем файл
+      const storedPFN = path.resolve(uploadFolder, files[indexToDelete].tmpName);
+      await fsp.unlink(storedPFN);
       files.splice(indexToDelete, 1);
-      // fs.writeFileSync(requestsFilePath, JSON.stringify(requests));
       await fsp.writeFile(uploadedFilePath, JSON.stringify(files), "utf8");
 
       const body = JSON.stringify({
@@ -178,6 +181,33 @@ webserver.post("/delete-file", async (req, res) => {
   } catch (e) {
     logLineAsync(logFN, `[${port}] /delete-file service error: ${e.message}`);
     res.status(500).send(e.message);
+  }
+});
+
+webserver.options("/download-file", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.send("");
+});
+
+webserver.post("/download-file", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  const file = req.body;
+
+  let files = await fsp.readFile(uploadedFilePath, "utf8");
+  files = JSON.parse(files);
+
+  const fileToDownload = files.find(item => {
+    return item.id === file.id;
+  });
+  const storedPFN = path.resolve(uploadFolder, fileToDownload.tmpName);
+  if (fileToDownload) {
+    logLineAsync(logFN, `[${port}] /download-file service [Файл ${fileToDownload.originalName} скачан ]`);
+    res.setHeader("Content-Disposition","attachment");
+    res.sendFile(storedPFN);
+  } else {
+    logLineAsync(logFN, `[${port}] /download-file service error: Файл не найден`);
+    res.status(500).send("Файл не найден");
   }
 });
 
