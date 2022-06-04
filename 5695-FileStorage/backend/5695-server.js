@@ -24,6 +24,7 @@ webserver.options("/get-files", (req, res) => {
   res.send("");
 });
 
+// получение списка сохрненный файлов
 webserver.get("/get-files", async (req, res) => {
   logLineAsync(logFN, `[${port}] ` + "/get-files service called");
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -41,6 +42,7 @@ webserver.options("/upload-file", (req, res) => {
   res.send("");
 });
 
+// загрузка файла
 webserver.post("/upload-file", busboy(), (req, res) => {
   logLineAsync(logFN, `[${port}] ` + "/upload-file service called");
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -135,6 +137,47 @@ webserver.post("/upload-file", busboy(), (req, res) => {
     });
   } catch (e) {
     logLineAsync(logFN, `[${port}] /upload-file service error: ${e.message}`);
+    res.status(500).send(e.message);
+  }
+});
+
+webserver.options("/delete-file", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.send("");
+});
+
+webserver.post("/delete-file", async (req, res) => {
+  logLineAsync(logFN, `[${port}] ` + "/delete-file service called");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  try {
+    const file = req.body;
+    let files = await fsp.readFile(uploadedFilePath, "utf8");
+    files = JSON.parse(files);
+
+    const indexToDelete = files.findIndex(item => {
+      return item.id === file.id;
+    });
+
+    if (indexToDelete !== -1) {
+      // удаляем запрос
+      files.splice(indexToDelete, 1);
+      // fs.writeFileSync(requestsFilePath, JSON.stringify(requests));
+      await fsp.writeFile(uploadedFilePath, JSON.stringify(files), "utf8");
+
+      const body = JSON.stringify({
+        // requestId: request.requestId || requests.length,
+        id: file.id,
+      });
+
+      res.send(body);
+    } else {
+      logLineAsync(logFN, `[${port}] ` + "/delete-file service error: wrong id");
+      res.status(510).send(`Не найден файл с id=${file.requestId}`);
+    }
+
+  } catch (e) {
+    logLineAsync(logFN, `[${port}] /delete-file service error: ${e.message}`);
     res.status(500).send(e.message);
   }
 });

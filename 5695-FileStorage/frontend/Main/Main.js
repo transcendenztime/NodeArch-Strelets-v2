@@ -24,9 +24,13 @@ const Main = () => {
     setUploadedFiles(answer);
   };
 
-  useEffect(() => {
-    getUploadedFiles();
+  useEffect(async () => {
+    await getUploadedFiles();
   }, []);
+
+  const scrollToSelectedFile = () => {
+    document.getElementById("checked-file").scrollIntoView();
+  };
 
   const addFile = e => {
     setFileForUpload(e.target.files[0]);
@@ -47,8 +51,14 @@ const Main = () => {
     // clearResponseParams();
     setSelectedFileId(file.id);
     setSelectedFileComment(file.comment);
-    // TODO добавить установку параметров выбранного файла для отображения
     setIsFormValid(true);
+  };
+
+  // очищаем поля формы
+  const clearUploadForm = () => {
+    setFileForUpload(null);
+    document.getElementById("file-input").value = "";
+    setCommentForFile("");
   };
 
   const uploadFile = async () => {
@@ -73,7 +83,6 @@ const Main = () => {
 
     answer = await answer.json();
 
-    // TODO добавить id сохраненного файла
     alert(`Файл сохранен под id=${answer.id}`);
 
     setUploadedFiles(answer.files);
@@ -83,9 +92,43 @@ const Main = () => {
     });
     setSelectedFileComment(selectedFile.comment);
 
-    setFileForUpload(null);
-    document.getElementById("file-input").value = "";
-    setCommentForFile("");
+    clearUploadForm();
+
+    scrollToSelectedFile();
+  };
+
+  // удаляем сохраненный файл
+  const deleteFile = async () => {
+    if(selectedFileId) {
+      if (confirm(`Подтверждаете удаление файла с id=${selectedFileId}?`)) {
+        const body = {
+          id: selectedFileId,
+        };
+
+        let answer = await isoFetch("/delete-file", {
+          method: Methods.POST,
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (answer.status === 500 || answer.status === 510) {
+          const error = await answer.text();
+          alert(`При выполнении запроса "/delete-file" на сервере произошла ошибка: ${error}`);
+          return;
+        }
+
+        answer = await answer.json();
+        alert(`Файл с id=${answer.id} удален`);
+
+        setSelectedFileComment("");
+        await getUploadedFiles();
+
+      }
+    } else {
+      alert("Не выбран файл для удаления")
+    }
   };
 
   const renderFilesList = () => {
@@ -99,6 +142,7 @@ const Main = () => {
                 key={id}
                 onClick={() => selectFileFromList(item)}
                 className={`Main__files-item  ${item.id === selectedFileId ? "Main__files-item--checked" : ""}`}
+                id={item.id === selectedFileId ? "checked-file" : item.id}
               >
                 <span className={"Main__file-id"}>{item.id}</span>
                 <span className={"Main__file-name"}>{item.originalName}</span>
@@ -109,6 +153,20 @@ const Main = () => {
           )}
         </div>
       </Fragment>
+    );
+  };
+
+  const renderButtons = () => {
+    return (
+      <div className={"Main__buttons"}>
+        {selectedFileId && (
+          <div>
+            <button className={"Main__button Main__button--red"} onClick={deleteFile}>
+              Удалить выбранный файл
+            </button>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -128,6 +186,7 @@ const Main = () => {
             Загрузить файл
           </button>
         </div>
+        {!isFormValid && <div>Заполните все поля</div>}
       </div>
     );
   };
@@ -136,7 +195,10 @@ const Main = () => {
     <div>
       <div className={"title"}>FileStorage (Strelets Vadim)</div>
       <div className={"Main"}>
-        <div className={"Main__left-column"}>{renderFilesList()}</div>
+        <div className={"Main__left-column"}>
+          {renderFilesList()}
+          {renderButtons()}
+        </div>
         <div className={"Main__right-column"}>
           <div className={"Main__head"}>Тут можно загрузить файл</div>
           <div className={"Main__info"}>
