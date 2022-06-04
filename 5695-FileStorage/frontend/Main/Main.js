@@ -10,10 +10,10 @@ const Main = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]); // список сохраненных файлов
 
   const [fileForUpload, setFileForUpload] = useState(null);
-  const [commentForFile, setCommentForFile] = useState(null);
+  const [commentForFile, setCommentForFile] = useState("");
   const [isFormValid, setIsFormValid] = useState(true);
   const [selectedFileId, setSelectedFileId] = useState(null);
-  const [selectedFileComment, setSelectedFileComment] = useState(null);
+  const [selectedFileComment, setSelectedFileComment] = useState("");
 
   // запрашиваем список загруженных на сервер файлов
   const getUploadedFiles = async () => {
@@ -24,8 +24,8 @@ const Main = () => {
     setUploadedFiles(answer);
   };
 
-  useEffect(async () => {
-    await getUploadedFiles();
+  useEffect( () => {
+    getUploadedFiles();
   }, []);
 
   const scrollToSelectedFile = () => {
@@ -99,7 +99,7 @@ const Main = () => {
 
   // удаляем сохраненный файл
   const deleteFile = async () => {
-    if(selectedFileId) {
+    if (selectedFileId) {
       if (confirm(`Подтверждаете удаление файла с id=${selectedFileId}?`)) {
         const body = {
           id: selectedFileId,
@@ -124,10 +124,9 @@ const Main = () => {
 
         setSelectedFileComment("");
         await getUploadedFiles();
-
       }
     } else {
-      alert("Не выбран файл для удаления")
+      alert("Не выбран файл для удаления");
     }
   };
 
@@ -173,20 +172,23 @@ const Main = () => {
   const renderUploadForm = () => {
     return (
       <div className={"Main__file-upload-form"}>
-        <input type={"file"} id={"file-input"} onChange={addFile} />
-        <textarea
-          placeholder={"Комментарий к загружаемому файлу"}
-          value={commentForFile}
-          onChange={changeCommentForFile}
-        />
-        {/* <textarea placeholder={'Комментарий к загружаемому файлу'} onChange={changeCommentForFile} />*/}
+        <div className={"Main__head"}>Тут можно загрузить файл</div>
+        <div className={"Main__file-upload-form-content"}>
+          <input type={"file"} id={"file-input"} onChange={addFile} />
+          <textarea
+            placeholder={"Комментарий к загружаемому файлу"}
+            value={commentForFile}
+            onChange={changeCommentForFile}
+          />
+          {/* <textarea placeholder={'Комментарий к загружаемому файлу'} onChange={changeCommentForFile} />*/}
 
-        <div>
-          <button className={"Main__button Main__button--green"} onClick={uploadFile}>
-            Загрузить файл
-          </button>
+          <div>
+            <button className={"Main__button Main__button--green"} onClick={uploadFile}>
+              Загрузить файл
+            </button>
+          </div>
+          {!isFormValid && <div className={"Main__error"}>Заполните все поля</div>}
         </div>
-        {!isFormValid && <div>Заполните все поля</div>}
       </div>
     );
   };
@@ -200,13 +202,14 @@ const Main = () => {
           {renderButtons()}
         </div>
         <div className={"Main__right-column"}>
-          <div className={"Main__head"}>Тут можно загрузить файл</div>
           <div className={"Main__info"}>
-            {renderUploadForm()}
-            <div className={"Main__head"}>Комментарий к загруженному файлу</div>
             <div className={"Main__chosen-file-parameters"}>
-              <textarea value={selectedFileComment} />
+              <div className={"Main__head"}>Комментарий к загруженному файлу</div>
+              <div className={"Main__chosen-file-parameters-content"}>
+                <textarea value={selectedFileComment} readOnly />
+              </div>
             </div>
+            {renderUploadForm()}
           </div>
         </div>
       </div>
