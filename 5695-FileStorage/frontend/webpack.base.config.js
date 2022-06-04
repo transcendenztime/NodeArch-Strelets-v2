@@ -18,7 +18,7 @@ export default new Config().merge({
   devServer: {
     hot: true,
     historyApiFallback: true,
-    port: 5695,
+    port: 5696,
   },
   module: {
     rules: [

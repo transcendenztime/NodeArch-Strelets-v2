@@ -44,7 +44,7 @@ export const openOrCreateFile = (filePath, initialData, logFN, port) => {
   if (fs.existsSync(filePath)) {
     requests = fs.readFileSync(filePath);
   } else {
-    // если файл с запросами не существует, создадим его базовый вариант (с пустым массивом)
+    // если файл с запросами не существует, создадим его базовый вариант
     fs.writeFileSync(filePath, JSON.stringify(initialData));
     requests = fs.readFileSync(filePath);
     logLineAsync(logFN, `[${port}] ` + `empty ${filePath} file created`);

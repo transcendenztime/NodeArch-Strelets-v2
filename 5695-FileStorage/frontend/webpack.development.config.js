@@ -7,5 +7,17 @@ export default new Config().extend("webpack.base.config.js").merge({
   devtool: "cheap-module-source-map",
   devServer: {
     historyApiFallback: true,
+    proxy: {
+      "/get-files": {
+        target: "http://localhost:5695/",
+        secure: false,
+        changeOrigin: true,
+      },
+      "/upload-file": {
+        target: "http://localhost:5695/",
+        secure: false,
+        changeOrigin: true,
+      },
+    }
   },
 });

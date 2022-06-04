@@ -6,6 +6,7 @@
 **/_server.log
 **/_stats.json
 **/_requests.json
+**/_uploaded-files.json
 **/uploads
 _nodemon.log
 nginx_caches/
