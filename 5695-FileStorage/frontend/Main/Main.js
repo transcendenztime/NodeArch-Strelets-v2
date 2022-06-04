@@ -24,7 +24,7 @@ const Main = () => {
     setUploadedFiles(answer);
   };
 
-  useEffect( () => {
+  useEffect(() => {
     getUploadedFiles();
   }, []);
 
@@ -133,7 +133,7 @@ const Main = () => {
   const renderFilesList = () => {
     return (
       <Fragment>
-        <div className={"Main__head"}>Сохраненные файлы:</div>
+        <div className={"Main__head"}>Загруженные файлы</div>
         <div className={"Main__files-list"}>
           {uploadedFiles.length ? (
             uploadedFiles.map((item, id) => (
@@ -175,11 +175,7 @@ const Main = () => {
         <div className={"Main__head"}>Тут можно загрузить файл</div>
         <div className={"Main__file-upload-form-content"}>
           <input type={"file"} id={"file-input"} onChange={addFile} />
-          <textarea
-            placeholder={"Комментарий к загружаемому файлу"}
-            value={commentForFile}
-            onChange={changeCommentForFile}
-          />
+          <textarea placeholder={"Введите комментарий"} value={commentForFile} onChange={changeCommentForFile} />
           {/* <textarea placeholder={'Комментарий к загружаемому файлу'} onChange={changeCommentForFile} />*/}
 
           <div>

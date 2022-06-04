@@ -175,7 +175,6 @@ webserver.post("/delete-file", async (req, res) => {
       logLineAsync(logFN, `[${port}] ` + "/delete-file service error: wrong id");
       res.status(510).send(`Не найден файл с id=${file.requestId}`);
     }
-
   } catch (e) {
     logLineAsync(logFN, `[${port}] /delete-file service error: ${e.message}`);
     res.status(500).send(e.message);
