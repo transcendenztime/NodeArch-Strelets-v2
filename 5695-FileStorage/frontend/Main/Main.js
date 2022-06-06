@@ -8,13 +8,12 @@ import "./Main.scss";
 
 const Main = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]); // список сохраненных файлов
-
   const [fileForUpload, setFileForUpload] = useState(null);
   const [commentForFile, setCommentForFile] = useState("");
   const [isFormValid, setIsFormValid] = useState(true);
   const [selectedFileId, setSelectedFileId] = useState(null); // id выбранного файла в списке загруженных файлов
   const [selectedFileComment, setSelectedFileComment] = useState("");
-  // const [webSocketId, setWebSocketId] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // запрашиваем список загруженных на сервер файлов
   const getUploadedFiles = async () => {
@@ -25,76 +24,49 @@ const Main = () => {
     setUploadedFiles(answer);
   };
 
-  let keepAliveTimer = null;
-  let connection = null;
-  let clientId = null;
+  let keepAliveTimer = null; // таймер для поддержания websocket соединения
+  let connection = null; // websocket соединение
+  let clientId = null; // id websocket соединения
 
   const openWSConnection = () => {
     connection = new WebSocket(wsUrl);
 
-    keepAliveTimer = setInterval(()=>{
+    keepAliveTimer = setInterval(() => {
       connection.send("KEEP_ME_ALIVE");
-    },3000);
+    }, 3000);
 
-    connection.onmessage = (event) => {
-      //console.log('клиентом получено сообщение от сервера: '+event.data); // это сработает, когда сервер пришлёт какое-либо сообщение
+    connection.onmessage = event => {
       const data = JSON.parse(event.data);
 
-      if(data.message === "NEW_CLIENT_CONNECTED") {
+      if (data.message === "NEW_CLIENT_CONNECTED") {
         clientId = data.clientId;
-        // setWebSocketId(data.clientId); // TODO - может не нужно будет сохранять
-        console.log("clientId: ", data.clientId);// TODO - убрать
+      } else if (data.message === "UPLOAD") {
+        setUploadProgress(data.percentage);
       }
     };
 
     connection.onerror = error => {
-      console.log('WebSocket error:',error);
+      console.log("WebSocket error:", error);
     };
 
     connection.onclose = () => {
       console.log("websocket соединение с сервером закрыто");
-      connection=null;
+      connection = null;
+      // clientId = null;
+      clearInterval(keepAliveTimer);
     };
-
   };
 
   const closeWSConnection = () => {
     connection.send("I_AM_DONE");
-    connection=null;
-    // console.log("webSocketId: ", webSocketId)
-    console.log("clientId: ", clientId);// TODO убрать
+    connection = null;
     clientId = null;
-    // setWebSocketId(null);
     clearInterval(keepAliveTimer);
   };
-
 
   useEffect(() => {
     getUploadedFiles();
   }, []);
-
-  /* useEffect(() => {
-    keepAliveTimer = setInterval(()=>{
-      connection.send('KEEP_ME_ALIVE');
-    },5000);
-
-    return () => {
-      // TODO так же нужно послать на сервер сообщение о разрыве соединения
-      clearInterval(keepAliveTimer);
-    }
-  });*/
-
-  /* useEffect(() => {
-    let connection = new WebSocket(wsUrl); // это сокет-соединение с сервером
-    keepAliveTimer = setInterval(()=>{
-      connection.send("KEEP_ME_ALIVE");
-    },3000);
-
-    return () => {
-      // connection.send("I_AM_DONE");
-      clearInterval(keepAliveTimer);
-    }
-  }, []);*/
 
   const scrollToSelectedFile = () => {
     document.getElementById("checked-file").scrollIntoView();
@@ -116,7 +88,6 @@ const Main = () => {
 
   // клик по запросу из списка сохраненных
   const selectFileFromList = file => {
-    // clearResponseParams();
     setSelectedFileId(file.id);
     setSelectedFileComment(file.comment);
     setIsFormValid(true);
@@ -134,25 +105,17 @@ const Main = () => {
 
     if (!isValid) return;
 
+    setUploadProgress(0);
+
     // прямо перед началом отправки файла инициируем websocket соединение с сервером
     openWSConnection();
 
-
-
-    // let connection = new WebSocket(wsUrl);
-    /* keepAliveTimer = setInterval(()=>{
-      connection.send("KEEP_ME_ALIVE");
-    },3000);*/
-    setTimeout(async ()=>{
-
+    setTimeout(async () => {
       let formData = new FormData();
       formData.append("commentForFile", commentForFile);
       formData.append("clientId", clientId);
-      // formData.append("webSocketId", webSocketId);
       formData.append("fileForUpload", fileForUpload);
 
-      // console.log(webSocketId);
-console.log("clientId: ", clientId); // TODO убрать
       let answer = await isoFetch("/upload-file", {
         method: Methods.POST,
         body: formData,
@@ -183,7 +146,7 @@ console.log("clientId: ", clientId); // TODO убрать
       clearUploadForm();
 
       scrollToSelectedFile();
-    },5000);
+    }, 1000);
   };
 
   // скачиваем файл
@@ -201,18 +164,17 @@ console.log("clientId: ", clientId); // TODO убрать
         body: JSON.stringify(body),
       });
 
-      const file = uploadedFiles.find((item) => {
+      const file = uploadedFiles.find(item => {
         return item.id === selectedFileId;
       });
 
       const fileBlob = await answer.blob();
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = URL.createObjectURL(fileBlob);
       link.download = file.originalName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
     } else {
       alert("Не выбран файл для скачивания");
     }
@@ -280,13 +242,13 @@ console.log("clientId: ", clientId); // TODO убрать
   const renderButtons = () => {
     return (
       <div className={"Main__buttons"}>
-        {selectedFileId &&
+        {selectedFileId && (
           <div>
             <button className={"Main__button Main__button--blue"} onClick={downloadFile}>
               Скачать выбранный файл
             </button>
           </div>
-        }
+        )}
         {selectedFileId && (
           <div>
             <button className={"Main__button Main__button--red"} onClick={deleteFile}>
@@ -305,12 +267,22 @@ console.log("clientId: ", clientId); // TODO убрать
         <div className={"Main__file-upload-form-content"}>
           <input type={"file"} id={"file-input"} onChange={addFile} />
           <textarea placeholder={"Введите комментарий"} value={commentForFile} onChange={changeCommentForFile} />
-          {/* <textarea placeholder={'Комментарий к загружаемому файлу'} onChange={changeCommentForFile} />*/}
-
           <div>
             <button className={"Main__button Main__button--green"} onClick={uploadFile}>
               Загрузить файл
             </button>
+          </div>
+          <div className={"Main__progress-wrap"}>
+            {!!uploadProgress && (
+              <div
+                className={"Main__progress-bar"}
+                style={{
+                  width: uploadProgress + "%",
+                }}
+              >
+                {uploadProgress === 100 && "Файл загружен"}
+              </div>
+            )}
           </div>
           {!isFormValid && <div className={"Main__error"}>Заполните все поля</div>}
         </div>

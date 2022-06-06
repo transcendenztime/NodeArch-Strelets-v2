@@ -4,14 +4,13 @@ const path = require("path");
 const fs = require("fs");
 const fsp = fs.promises;
 const busboy = require("connect-busboy");
-const WebSocket = require('ws');
+const WebSocket = require("ws");
 
-const {openOrCreateFilePr, logLineAsync, getRandomFileName} = require("../../utils/back-utils");
+const {openOrCreateFilePr, logLineAsync, getRandomFileName, getRandomInt} = require("../../utils/back-utils");
 
 const webserver = express();
 
 webserver.use(express.static(path.join(__dirname, "../frontend/public")));
-// webserver.use(express.urlencoded({extended: true}));
 webserver.use(bodyParser.json());
 
 const port = 5695;
@@ -21,57 +20,41 @@ const jsonFilesPath = "jsonFiles";
 const uploadedFilePath = path.join(jsonFilesPath, "_uploaded-files.json");
 const uploadFolder = path.join(__dirname, "uploads");
 
-let clients=[]; // здесь будут хэши вида { connection:, lastkeepalive:NNN }
-// let timer=0;
+let clients = []; // здесь будут хэши вида { connection:, lastkeepalive:NNN }
 
-const wsServer = new WebSocket.Server({ port: wsPort }); // создаём сокет-сервер на порту 5696
+const wsServer = new WebSocket.Server({port: wsPort}); // создаём сокет-сервер на порту 5696
 
-wsServer.on('connection', connection => { // connection - это сокет-соединение сервера с клиентом
+wsServer.on("connection", connection => {
+  // connection - это сокет-соединение сервера с клиентом
 
-  // logLineSync(logFN,`[${port}] `+"new connection established");
-
-  logLineAsync(logFN, `[${wsPort}] new websocket connection established`);
-
-  // connection.send('hello from server to client! timer='+timer); // это сообщение будет отослано сервером каждому присоединившемуся клиенту
-
-  connection.on('message', message => {
-    /* if (message === "NEW_CLIENT_CONNECTED") {
-      clients.forEach( client => {
-        if ( client.connection===connection ) {
-          const clientMessage = {message: "NEW_CLIENT_CONNECTED", clientId}
-          client.connection.send(JSON.stringify(clientMessage))
-          //client.connection.send()
-        }
-      } );
-    } else*/ if ( message==="KEEP_ME_ALIVE" ) { console.log(message)
-      clients.forEach( client => {
-        if ( client.connection===connection ) {
+  connection.on("message", message => {
+    if (message === "KEEP_ME_ALIVE") {
+      clients.forEach(client => {
+        if (client.connection === connection) {
           client.lastkeepalive = Date.now();
         }
-      } );
-    } else if (message==="I_AM_DONE") {console.log(message)
+      });
+    } else if (message === "I_AM_DONE") {
       // клиент инициирует отключение
-      clients.forEach( client => {
-        if ( client.connection===connection ) {
+      clients.forEach(client => {
+        if (client.connection === connection) {
           const clientMessage = {message: "CONNECTION_CLOSED"};
           client.connection.send(JSON.stringify(clientMessage));
           client.connection.terminate(); // если клиент уже давно не отчитывался что жив - закрываем соединение
           client.connection = null;
           logLineAsync(logFN, `[${wsPort}] client disconnected by request`);
         }
-      } );
-      clients=clients.filter( client => client.connection ); // оставляем в clients только живые соединения
+      });
+      clients = clients.filter(client => client.connection); // оставляем в clients только живые соединения
     }
-      // console.log('сервером получено сообщение от клиента: '+message) // это сработает, когда клиент пришлёт какое-либо сообщение
   });
 
-  // нужно сформировать id для подключившегося клиента
   // по этому id будем искать клиента в массиве, чтобы отправилять информацию по загрузке файла
-  const clientId = clients.length ? clients[clients.length - 1].id + 1 : 1;
+  const clientId = getRandomInt(1, 1000000);
 
-  clients.push( { connection:connection, clientId, lastkeepalive:Date.now() } );
-
-  const clientMessage = {message: "NEW_CLIENT_CONNECTED", clientId}
+  clients.push({connection: connection, clientId, lastkeepalive: Date.now()});
+  logLineAsync(logFN, `[${wsPort}] new websocket connection established [ clientId: ${clientId}]`);
+  const clientMessage = {message: "NEW_CLIENT_CONNECTED", clientId};
   connection.send(JSON.stringify(clientMessage));
 });
 
@@ -81,7 +64,7 @@ webserver.options("/get-files", (req, res) => {
   res.send("");
 });
 
-// получение списка сохрненный файлов
+// получение списка сохраненных файлов
 webserver.get("/get-files", async (req, res) => {
   logLineAsync(logFN, `[${port}] ` + "/get-files service called");
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -110,6 +93,7 @@ webserver.post("/upload-file", busboy(), (req, res) => {
 
     let reqFields = {}; // информация обо всех полях запроса, кроме файлов
     let reqFiles = {}; // информация обо всех файлах
+    let client = null;
     req.pipe(req.busboy); // перенаправляем поток приёма ответа в busboy
 
     req.busboy.on("field", (fieldname, val) => {
@@ -119,50 +103,37 @@ webserver.post("/upload-file", busboy(), (req, res) => {
 
     req.busboy.on("file", (fieldname, file, filename, encoding, mimeType) => {
       // это событие возникает, когда в запросе обнаруживается файл
-      // console.log("fieldname: ", fieldname)
-      // console.log("file: ", file)
-      // console.log("filename: ", filename)
       const tmpFileName = getRandomFileName();
-
-      // const storedPFN = getRandomFileName(path.join(__dirname,"uploads"));
-
       const storedPFN = path.resolve(uploadFolder, tmpFileName);
-console.log("reqFields.webSocketId = ", reqFields.clientId)
-      // const fileName = encodeURIComponent(filename);
+
+      client = clients.find(client => {
+        return client.clientId === parseInt(reqFields.clientId);
+      });
+
       const fileName = filename;
-      // console.log("fileName: ", fileName);
       reqFiles[fieldname] = {originalFN: fileName, storedPFN: storedPFN, tmpFileName: tmpFileName};
 
       logLineAsync(logFN, `[${port}] Uploading of ${fileName} started`);
 
       const fsStream = fs.createWriteStream(storedPFN);
-
       file.pipe(fsStream);
 
       file.on("data", data => {
         totalDownloaded += data.length;
         // console.log("loaded " + totalDownloaded + " bytes of " + totalRequestLength);
-
-        //connection
-
+        // отправляем прогресс загрузки на фронт
+        client.connection.send(
+          JSON.stringify({message: "UPLOAD", percentage: (totalDownloaded / totalRequestLength) * 100}),
+        );
       });
 
       file.on("end", () => {
         logLineAsync(logFN, `[${port}] file ${fileName} received`);
+        client.connection.send(JSON.stringify({message: "UPLOAD", percentage: 100}));
       });
     });
 
     req.busboy.on("finish", async () => {
-      // console.log('file saved, origin fileName='+reqFiles.photo.originalFN+', store fileName='+reqFiles.photo.storedPFN);
-      /* console.log(
-        "file saved, origin fileName=" +
-          reqFiles.fileForUpload.originalFN +
-          ", store path=" +
-          reqFiles.fileForUpload.storedPFN +
-          ", tmpFileName=" +
-          reqFiles.fileForUpload.tmpFileName,
-      );*/
-
       const file = {
         originalName: reqFiles.fileForUpload.originalFN,
         comment: reqFields.commentForFile,
@@ -173,16 +144,11 @@ console.log("reqFields.webSocketId = ", reqFields.clientId)
       files = JSON.parse(files);
 
       const id = files.length ? files[files.length - 1].id + 1 : 1;
-
-      // files.push({...file, id: files.length ? files[files.length - 1].id + 1 : 1});
-
       files.push({...file, id});
 
-      // fs.writeFileSync(requestsFilePath, JSON.stringify(files));
       await fsp.writeFile(uploadedFilePath, JSON.stringify(files), "utf8");
 
       const body = JSON.stringify({
-        // id: files[files.length - 1].id,
         id,
         files,
       });
@@ -196,8 +162,6 @@ console.log("reqFields.webSocketId = ", reqFields.clientId)
       // если же что-то пойдет не так, тогда мы прибьем клиента по таймеру максимум через несколько секунд
 
       res.send(body);
-
-      //      res.send("ok login="+reqFields.login);
     });
   } catch (e) {
     logLineAsync(logFN, `[${port}] /upload-file service error: ${e.message}`);
@@ -231,7 +195,6 @@ webserver.post("/delete-file", async (req, res) => {
       await fsp.writeFile(uploadedFilePath, JSON.stringify(files), "utf8");
 
       const body = JSON.stringify({
-        // requestId: request.requestId || requests.length,
         id: file.id,
       });
 
@@ -265,7 +228,7 @@ webserver.post("/download-file", async (req, res) => {
   const storedPFN = path.resolve(uploadFolder, fileToDownload.tmpName);
   if (fileToDownload) {
     logLineAsync(logFN, `[${port}] /download-file service [Файл ${fileToDownload.originalName} скачан ]`);
-    res.setHeader("Content-Disposition","attachment");
+    res.setHeader("Content-Disposition", "attachment");
     res.sendFile(storedPFN);
   } else {
     logLineAsync(logFN, `[${port}] /download-file service error: Файл не найден`);
@@ -273,19 +236,16 @@ webserver.post("/download-file", async (req, res) => {
   }
 });
 
-setInterval(()=>{
-  // timer++;
-  clients.forEach( client => {
-    if ( (Date.now()-client.lastkeepalive)>8000 ) {
+setInterval(() => {
+  clients.forEach(client => {
+    if (Date.now() - client.lastkeepalive > 8000) {
       client.connection.terminate(); // если клиент уже давно не отчитывался что жив - закрываем соединение
-      client.connection=null;
+      client.connection = null;
       logLineAsync(logFN, `[${wsPort}] client disconnected by timeout`);
     }
-    /* else
-      client.connection.send('timer='+timer);*/
-  } );
-  clients=clients.filter( client => client.connection ); // оставляем в clients только живые соединения
-},3000);
+  });
+  clients = clients.filter(client => client.connection); // оставляем в clients только живые соединения
+}, 3000);
 
 webserver.listen(port, () => {
   logLineAsync(logFN, "web server running on port " + port);

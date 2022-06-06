@@ -69,7 +69,7 @@ const openOrCreateFilePr = async (filePath, initialData, logFN, port) => {
   let files;
   try {
     // если файл с запросами существует, прочитаем его
-    files = await fsp.readFile(filePath, "utf8")
+    files = await fsp.readFile(filePath, "utf8");
   } catch (e) {
     await fsp.writeFile(filePath, JSON.stringify(initialData), "utf8");
     files = await fsp.readFile(filePath);
@@ -84,10 +84,17 @@ const getRandomFileName = () => {
   return Math.random().toString(36).substring(2, 15);
 };
 
+const getRandomInt = (min, max) => {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min; //Максимум не включается, минимум включается
+};
+
 module.exports = {
   isURLValid,
   logLineAsync,
   openOrCreateFile,
   openOrCreateFilePr,
-  getRandomFileName
+  getRandomFileName,
+  getRandomInt,
 };

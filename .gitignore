@@ -7,7 +7,7 @@
 **/_stats.json
 **/_requests.json
 **/_uploaded-files.json
-**/uploads
+**/uploads/
 _nodemon.log
 nginx_caches/
 **/frontend/public/
