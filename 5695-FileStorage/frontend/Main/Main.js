@@ -134,8 +134,6 @@ const Main = () => {
       // как отправили файл, сразу разрываем websocket соединение
       closeWSConnection();
 
-      alert(`Файл сохранен под id=${answer.id}`);
-
       setUploadedFiles(answer.files);
       setSelectedFileId(answer.id);
       const selectedFile = answer.files.find(it => {
@@ -146,6 +144,8 @@ const Main = () => {
       clearUploadForm();
 
       scrollToSelectedFile();
+
+      alert(`Файл сохранен под id=${answer.id}`);
     }, 1000);
   };
 
