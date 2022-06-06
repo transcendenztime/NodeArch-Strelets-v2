@@ -2,7 +2,7 @@ import React, {Fragment} from "react";
 import {useEffect, useState} from "react";
 import isoFetch from "isomorphic-fetch";
 
-import {Methods} from "../constants/constants";
+import {Methods, wsUrl} from "../constants/constants";
 
 import "./Main.scss";
 
@@ -12,8 +12,9 @@ const Main = () => {
   const [fileForUpload, setFileForUpload] = useState(null);
   const [commentForFile, setCommentForFile] = useState("");
   const [isFormValid, setIsFormValid] = useState(true);
-  const [selectedFileId, setSelectedFileId] = useState(null);
+  const [selectedFileId, setSelectedFileId] = useState(null); // id выбранного файла в списке загруженных файлов
   const [selectedFileComment, setSelectedFileComment] = useState("");
+  // const [webSocketId, setWebSocketId] = useState("");
 
   // запрашиваем список загруженных на сервер файлов
   const getUploadedFiles = async () => {
@@ -24,9 +25,76 @@ const Main = () => {
     setUploadedFiles(answer);
   };
 
+  let keepAliveTimer = null;
+  let connection = null;
+  let clientId = null;
+
+  const openWSConnection = () => {
+    connection = new WebSocket(wsUrl);
+
+    keepAliveTimer = setInterval(()=>{
+      connection.send("KEEP_ME_ALIVE");
+    },3000);
+
+    connection.onmessage = (event) => {
+      //console.log('клиентом получено сообщение от сервера: '+event.data); // это сработает, когда сервер пришлёт какое-либо сообщение
+      const data = JSON.parse(event.data);
+
+      if(data.message === "NEW_CLIENT_CONNECTED") {
+        clientId = data.clientId;
+        // setWebSocketId(data.clientId); // TODO - может не нужно будет сохранять
+        console.log("clientId: ", data.clientId);// TODO - убрать
+      }
+    };
+
+    connection.onerror = error => {
+      console.log('WebSocket error:',error);
+    };
+
+    connection.onclose = () => {
+      console.log("websocket соединение с сервером закрыто");
+      connection=null;
+    };
+
+  };
+
+  const closeWSConnection = () => {
+    connection.send("I_AM_DONE");
+    connection=null;
+    // console.log("webSocketId: ", webSocketId)
+    console.log("clientId: ", clientId);// TODO убрать
+    clientId = null;
+    // setWebSocketId(null);
+    clearInterval(keepAliveTimer);
+  };
+
+
   useEffect(() => {
     getUploadedFiles();
   }, []);
+
+  /* useEffect(() => {
+    keepAliveTimer = setInterval(()=>{
+      connection.send('KEEP_ME_ALIVE');
+    },5000);
+
+    return () => {
+      // TODO так же нужно послать на сервер сообщение о разрыве соединения
+      clearInterval(keepAliveTimer);
+    }
+  });*/
+
+  /* useEffect(() => {
+    let connection = new WebSocket(wsUrl); // это сокет-соединение с сервером
+    keepAliveTimer = setInterval(()=>{
+      connection.send("KEEP_ME_ALIVE");
+    },3000);
+
+    return () => {
+      // connection.send("I_AM_DONE");
+      clearInterval(keepAliveTimer);
+    }
+  }, []);*/
 
   const scrollToSelectedFile = () => {
     document.getElementById("checked-file").scrollIntoView();
@@ -66,35 +134,56 @@ const Main = () => {
 
     if (!isValid) return;
 
-    let formData = new FormData();
-    formData.append("fileForUpload", fileForUpload);
-    formData.append("commentForFile", commentForFile);
+    // прямо перед началом отправки файла инициируем websocket соединение с сервером
+    openWSConnection();
 
-    let answer = await isoFetch("/upload-file", {
-      method: Methods.POST,
-      body: formData,
-    });
 
-    if (answer.status === 500) {
-      const error = await answer.text();
-      alert(`При выполнении запроса "/upload-file" на сервере произошла ошибка: ${error}`);
-      return;
-    }
 
-    answer = await answer.json();
+    // let connection = new WebSocket(wsUrl);
+    /* keepAliveTimer = setInterval(()=>{
+      connection.send("KEEP_ME_ALIVE");
+    },3000);*/
+    setTimeout(async ()=>{
 
-    alert(`Файл сохранен под id=${answer.id}`);
+      let formData = new FormData();
+      formData.append("commentForFile", commentForFile);
+      formData.append("clientId", clientId);
+      // formData.append("webSocketId", webSocketId);
+      formData.append("fileForUpload", fileForUpload);
 
-    setUploadedFiles(answer.files);
-    setSelectedFileId(answer.id);
-    const selectedFile = answer.files.find(it => {
-      return it.id === answer.id;
-    });
-    setSelectedFileComment(selectedFile.comment);
+      // console.log(webSocketId);
+console.log("clientId: ", clientId); // TODO убрать
+      let answer = await isoFetch("/upload-file", {
+        method: Methods.POST,
+        body: formData,
+      });
 
-    clearUploadForm();
+      if (answer.status === 500) {
+        const error = await answer.text();
+        alert(`При выполнении запроса "/upload-file" на сервере произошла ошибка: ${error}`);
+        // если ошибка - разрываем websocket соединение
+        closeWSConnection();
+        return;
+      }
 
-    scrollToSelectedFile();
+      answer = await answer.json();
+
+      // как отправили файл, сразу разрываем websocket соединение
+      closeWSConnection();
+
+      alert(`Файл сохранен под id=${answer.id}`);
+
+      setUploadedFiles(answer.files);
+      setSelectedFileId(answer.id);
+      const selectedFile = answer.files.find(it => {
+        return it.id === answer.id;
+      });
+      setSelectedFileComment(selectedFile.comment);
+
+      clearUploadForm();
+
+      scrollToSelectedFile();
+    },5000);
   };
 
   // скачиваем файл
