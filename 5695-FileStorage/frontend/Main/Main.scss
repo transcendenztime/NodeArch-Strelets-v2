@@ -201,6 +201,11 @@
         box-shadow: 0 4px 6px 0 rgba(255, 152, 0, 0.5);
       }
     }
+
+    &--disabled {
+      background-color: grey;
+    }
+
   }
 
   &__progress-wrap {

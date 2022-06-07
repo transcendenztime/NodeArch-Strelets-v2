@@ -15,6 +15,8 @@ const Main = () => {
   const [selectedFileComment, setSelectedFileComment] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   // запрашиваем список загруженных на сервер файлов
   const getUploadedFiles = async () => {
     let answer = await isoFetch("/get-files", {
@@ -64,8 +66,10 @@ const Main = () => {
     clearInterval(keepAliveTimer);
   };
 
-  useEffect(() => {
-    getUploadedFiles();
+  useEffect(async () => {
+    setIsLoading(true);
+    await getUploadedFiles();
+    setIsLoading(false);
   }, []);
 
   const scrollToSelectedFile = () => {
@@ -105,6 +109,8 @@ const Main = () => {
 
     if (!isValid) return;
 
+    setIsLoading(true);
+
     setUploadProgress(0);
 
     // прямо перед началом отправки файла инициируем websocket соединение с сервером
@@ -126,6 +132,7 @@ const Main = () => {
         alert(`При выполнении запроса "/upload-file" на сервере произошла ошибка: ${error}`);
         // если ошибка - разрываем websocket соединение
         closeWSConnection();
+        setIsLoading(false);
         return;
       }
 
@@ -142,8 +149,9 @@ const Main = () => {
       setSelectedFileComment(selectedFile.comment);
 
       clearUploadForm();
-
       scrollToSelectedFile();
+
+      setIsLoading(false);
 
       alert(`Файл сохранен под id=${answer.id}`);
     }, 1000);
@@ -155,6 +163,8 @@ const Main = () => {
       const body = {
         id: selectedFileId,
       };
+
+      setIsLoading(true);
 
       let answer = await isoFetch("/download-file", {
         method: Methods.POST,
@@ -175,6 +185,8 @@ const Main = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      setIsLoading(false);
     } else {
       alert("Не выбран файл для скачивания");
     }
@@ -188,6 +200,8 @@ const Main = () => {
           id: selectedFileId,
         };
 
+        setIsLoading(true);
+
         let answer = await isoFetch("/delete-file", {
           method: Methods.POST,
           headers: {
@@ -199,6 +213,7 @@ const Main = () => {
         if (answer.status === 500 || answer.status === 510) {
           const error = await answer.text();
           alert(`При выполнении запроса "/delete-file" на сервере произошла ошибка: ${error}`);
+          setIsLoading(false);
           return;
         }
 
@@ -208,6 +223,7 @@ const Main = () => {
         setSelectedFileComment("");
         setSelectedFileId(null);
         await getUploadedFiles();
+        setIsLoading(false);
       }
     } else {
       alert("Не выбран файл для удаления");
@@ -244,14 +260,14 @@ const Main = () => {
       <div className={"Main__buttons"}>
         {selectedFileId && (
           <div>
-            <button className={"Main__button Main__button--blue"} onClick={downloadFile}>
+            <button className={`Main__button ${isLoading ? "Main__button--disabled" : "Main__button--blue"}`} onClick={!isLoading && downloadFile}>
               Скачать выбранный файл
             </button>
           </div>
         )}
         {selectedFileId && (
           <div>
-            <button className={"Main__button Main__button--red"} onClick={deleteFile}>
+            <button className={`Main__button ${isLoading ? "Main__button--disabled" : "Main__button--red"}`} onClick={!isLoading && deleteFile}>
               Удалить выбранный файл
             </button>
           </div>
@@ -268,7 +284,7 @@ const Main = () => {
           <input type={"file"} id={"file-input"} onChange={addFile} />
           <textarea placeholder={"Введите комментарий"} value={commentForFile} onChange={changeCommentForFile} />
           <div>
-            <button className={"Main__button Main__button--green"} onClick={uploadFile}>
+            <button className={`Main__button ${isLoading ? "Main__button--disabled" : "Main__button--green"}`} onClick={!isLoading && uploadFile}>
               Загрузить файл
             </button>
           </div>
