@@ -1,5 +1,5 @@
 {
-  "name": "5695-filestorage",
+  "name": "5698-filestorage",
   "version": "1.0.0",
   "description": "frontend for FileStorage hometask",
   "main": "index.js",
@@ -8,7 +8,7 @@
     "buildprod": "cross-env NODE_ENV=production ./node_modules/.bin/webpack --progress"
   },
   "keywords": [
-    "5695",
+    "5698",
     "FileStorage"
   ],
   "author": "Strelets Vadim",

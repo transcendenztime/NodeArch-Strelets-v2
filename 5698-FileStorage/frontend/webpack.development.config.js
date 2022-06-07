@@ -9,17 +9,22 @@ export default new Config().extend("webpack.base.config.js").merge({
     historyApiFallback: true,
     proxy: {
       "/get-files": {
-        target: "http://localhost:5695/",
+        target: "http://localhost:5698/",
         secure: false,
         changeOrigin: true,
       },
       "/upload-file": {
-        target: "http://localhost:5695/",
+        target: "http://localhost:5698/",
         secure: false,
         changeOrigin: true,
       },
       "/delete-file": {
-        target: "http://localhost:5695/",
+        target: "http://localhost:5698/",
+        secure: false,
+        changeOrigin: true,
+      },
+      "/download-file": {
+        target: "http://localhost:5698/",
         secure: false,
         changeOrigin: true,
       },

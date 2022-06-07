@@ -13,8 +13,8 @@ const webserver = express();
 webserver.use(express.static(path.join(__dirname, "../frontend/public")));
 webserver.use(bodyParser.json());
 
-const port = 5695;
-const wsPort = 5696;
+const port = 5698;
+const wsPort = 5699;
 const logFN = path.join(__dirname, "_server.log");
 const jsonFilesPath = "jsonFiles";
 const uploadedFilePath = path.join(jsonFilesPath, "_uploaded-files.json");
@@ -215,33 +215,24 @@ webserver.options("/download-file", (req, res) => {
   res.send("");
 });
 
-webserver.get("/download-file/:id", async (req, res) => {
+webserver.post("/download-file", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  try {
-    const fileId = parseInt(req.params.id);
-    let files = await fsp.readFile(uploadedFilePath, "utf8");
-    files = JSON.parse(files);
+  const file = req.body;
 
-    const fileToDownload = files.find(item => {
-      return item.id === fileId;
-    });
+  let files = await fsp.readFile(uploadedFilePath, "utf8");
+  files = JSON.parse(files);
 
-    const storedPFN = path.resolve(uploadFolder, fileToDownload.tmpName);
-
-    if (fileToDownload) {
-      const newFileName = encodeURIComponent(fileToDownload.originalName);
-      res.setHeader("Content-Disposition", `attachment;filename*=UTF-8\'\'${newFileName}`);
-
-      logLineAsync(logFN, `[${port}] /download-file service [Файл ${fileToDownload.originalName} скачан ]`);
-
-      res.sendFile(storedPFN);
-    } else {
-      logLineAsync(logFN, `[${port}] /download-file service error: unknown file`);
-      res.status(500).send("Файл не найден");
-    }
-  } catch (e) {
-    logLineAsync(logFN, `[${port}] /download-file service error: unknown file`);
-    res.status(510).send(e.message);
+  const fileToDownload = files.find(item => {
+    return item.id === file.id;
+  });
+  const storedPFN = path.resolve(uploadFolder, fileToDownload.tmpName);
+  if (fileToDownload) {
+    logLineAsync(logFN, `[${port}] /download-file service [Файл ${fileToDownload.originalName} скачан ]`);
+    res.setHeader("Content-Disposition", "attachment");
+    res.sendFile(storedPFN);
+  } else {
+    logLineAsync(logFN, `[${port}] /download-file service error: Файл не найден`);
+    res.status(500).send("Файл не найден");
   }
 });
 

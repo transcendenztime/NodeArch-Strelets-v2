@@ -2,7 +2,7 @@ import React, {Fragment} from "react";
 import {useEffect, useState} from "react";
 import isoFetch from "isomorphic-fetch";
 
-import {Methods, wsUrl, server} from "../constants/constants";
+import {Methods, wsUrl} from "../constants/constants";
 
 import "./Main.scss";
 
@@ -160,6 +160,41 @@ const Main = () => {
     }, 1000);
   };
 
+  // скачиваем файл
+  const downloadFile = async () => {
+    if (selectedFileId) {
+      const body = {
+        id: selectedFileId,
+      };
+
+      setIsLoading(true);
+
+      let answer = await isoFetch("/download-file", {
+        method: Methods.POST,
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const file = uploadedFiles.find(item => {
+        return item.id === selectedFileId;
+      });
+
+      const fileBlob = await answer.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(fileBlob);
+      link.download = file.originalName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setIsLoading(false);
+    } else {
+      alert("Не выбран файл для скачивания");
+    }
+  };
+
   // удаляем сохраненный файл
   const deleteFile = async () => {
     if (selectedFileId) {
@@ -228,7 +263,9 @@ const Main = () => {
       <div className={"Main__buttons"}>
         {selectedFileId && (
           <div>
-            <a href={`${server}/download-file/${selectedFileId}`} className={`Main__button ${isLoading ? "Main__button--disabled" : "Main__button--blue"}`}>Скачать выбранный файл</a>
+            <button className={`Main__button ${isLoading ? "Main__button--disabled" : "Main__button--blue"}`} onClick={!isLoading && downloadFile}>
+              Скачать выбранный файл
+            </button>
           </div>
         )}
         {selectedFileId && (
