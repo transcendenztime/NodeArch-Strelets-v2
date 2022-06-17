@@ -1,0 +1,41 @@
+#container {
+  width: 1300px;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.Main {
+  // display: flex;
+  padding: 15px 10px;
+  border: 1px solid gray;
+  box-shadow: 0 5px 10px 2px #b3b0b0;
+
+  &__head {
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+
+  &__query {
+    margin-top: 20px;
+    padding: 15px 10px;
+    border: 1px solid gray;
+    box-shadow: 0 5px 10px 2px #b3b0b0;
+    overflow-y: auto;
+
+    > textarea {
+      height: 250px;
+      width: 99%;
+      padding: 5px;
+    }
+  }
+}
