@@ -14,7 +14,6 @@
 }
 
 .Main {
-  // display: flex;
   padding: 15px 10px;
   border: 1px solid gray;
   box-shadow: 0 5px 10px 2px #b3b0b0;
@@ -25,17 +24,82 @@
     font-weight: bold;
   }
 
+  &__button {
+    cursor: pointer;
+    margin: 5px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: normal;
+    text-align: center;
+    color: #fff;
+    transition: all 0.3s ease;
+    position: relative;
+
+    &--green {
+      background-color: #11bf6a;
+      box-shadow: 0 4px 6px 0 rgba(45, 129, 87, 0.5);
+
+      &:hover {
+        background-color: #4ba97d;
+        box-shadow: 0 4px 6px 0 rgba(45, 129, 87, 0.5);
+      }
+
+      &:active {
+        background-color: #42926f;
+        box-shadow: 0 4px 6px 0 rgba(45, 129, 87, 0.5);
+      }
+    }
+  }
+
+  &__databases {
+    padding: 15px 10px;
+    border: 1px solid gray;
+    box-shadow: 0 5px 10px 2px #b3b0b0;
+  }
+
   &__query {
-    margin-top: 20px;
+    margin: 20px 0 20px;
     padding: 15px 10px;
     border: 1px solid gray;
     box-shadow: 0 5px 10px 2px #b3b0b0;
     overflow-y: auto;
 
     > textarea {
-      height: 250px;
+      height: 170px;
       width: 99%;
       padding: 5px;
+    }
+  }
+
+  &__result {
+    margin-top: 20px;
+    padding: 15px 10px;
+    border: 1px solid gray;
+    box-shadow: 0 5px 10px 2px #b3b0b0;
+    overflow-y: auto;
+    height: 250px;
+
+    table {
+      box-shadow: 0 5px 10px 2px #b3b0b0;
+    }
+
+    thead {
+      background-color: gray;
+    }
+
+    th {
+      padding: 2px;
+    }
+
+    tbody {
+      background-color: #a6caf3;
+    }
+
+    td {
+      padding: 2px;
     }
   }
 }

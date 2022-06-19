@@ -13,6 +13,11 @@ export default new Config().extend("webpack.base.config.js").merge({
         secure: false,
         changeOrigin: true,
       },
+      "/execute-query": {
+        target: "http://localhost:6195/",
+        secure: false,
+        changeOrigin: true,
+      }
     }
   },
 });
