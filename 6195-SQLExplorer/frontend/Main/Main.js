@@ -120,12 +120,12 @@ const Main = () => {
       body: JSON.stringify(body),
     });
 
-    if (answer.status === 500) {
+    /* if (answer.status === 500) {
       const error = await answer.text();
       alert(`При выполнении запроса "/execute-query" на сервере произошла ошибка: ${error}`);
       setIsLoading(false);
       return;
-    }
+    }*/
 
     answer = await answer.json();
 
