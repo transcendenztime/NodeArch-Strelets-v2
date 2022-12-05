@@ -13,8 +13,8 @@ const webserver = express();
 webserver.use(express.static(path.join(__dirname, "../frontend/public")));
 webserver.use(bodyParser.json());
 
-const port = 5695;
-const wsPort = 5696;
+const port = 6595;
+const wsPort = 6596;
 const logFN = path.join(__dirname, "_server.log");
 const jsonFilesPath = "jsonFiles";
 const uploadedFilePath = path.join(jsonFilesPath, "_uploaded-files.json");

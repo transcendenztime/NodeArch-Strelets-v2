@@ -1,0 +1,244 @@
+#container {
+  width: 1300px;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+a.Main {
+  &__button {
+    font-size: 15px;
+    text-decoration: none;
+    display: inline-block;
+  }
+}
+
+.Main {
+  display: flex;
+  padding: 15px 10px;
+  border: 1px solid gray;
+  box-shadow: 0 5px 10px 2px #b3b0b0;
+
+  &__left-column {
+    width: 30%;
+  }
+
+  &__right-column {
+    width: 70%;
+  }
+
+  &__head {
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+
+  &__files-list {
+    margin-right: 20px;
+    border: 1px solid black;
+    height: 500px;
+    overflow: auto;
+    box-shadow: 0 5px 10px 2px #b3b0b0;
+  }
+
+  &__empty-list {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 18px;
+    font-style: italic;
+  }
+
+  &__info {
+    display: flex;
+    margin-bottom: 10px;
+  }
+
+  &__chosen-file-parameters {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+  }
+
+  &__chosen-file-parameters-content {
+    display: flex;
+    border: 1px solid black;
+    padding: 10px;
+    box-shadow: 0 5px 10px 2px #b3b0b0;
+    height: 480px;
+    margin-right: 5%;
+
+    > textarea {
+      height: 100%;
+      width: 100%;
+    }
+  }
+
+  &__file-upload-form {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+  }
+
+  &__file-upload-form-content {
+    padding: 10px;
+    border: 1px solid black;
+    display: flex;
+    box-shadow: 0 5px 10px 2px #b3b0b0;
+    height: 480px;
+    flex-direction: column;
+
+    > textarea {
+      margin: 10px 0;
+      width: 99%;
+      height: 68%;
+    }
+  }
+
+  &__files-item {
+    margin: 5px;
+    cursor: pointer;
+    display: flex;
+    border: 1px solid black;
+    box-shadow: 0 5px 10px 2px #b3b0b0;
+    &:hover {
+      background-color: #e1dbdb;
+    }
+
+    &--checked {
+      background-color: #b3b0b0;
+    }
+  }
+
+  &__file-id {
+    font-family: sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    width: 45px;
+    padding: 6px 0;
+    margin-right: 5px;
+    text-align: center;
+  }
+
+  &__file-name {
+    padding: 6px 0;
+  }
+
+  &__buttons {
+    margin: 10px 20px 0 0;
+    padding: 10px;
+  }
+
+  &__button {
+    cursor: pointer;
+    margin: 5px 0;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: normal;
+    text-align: center;
+    color: #fff;
+    transition: all 0.3s ease;
+    position: relative;
+
+    &--green {
+      background-color: #11bf6a;
+      box-shadow: 0 4px 6px 0 rgba(45, 129, 87, 0.5);
+
+      &:hover {
+        background-color: #4ba97d;
+        box-shadow: 0 4px 6px 0 rgba(45, 129, 87, 0.5);
+      }
+
+      &:active {
+        background-color: #42926f;
+        box-shadow: 0 4px 6px 0 rgba(45, 129, 87, 0.5);
+      }
+    }
+
+    &--blue {
+      background-color: #0092f1;
+      box-shadow: 0 4px 6px 0 rgba(15, 140, 198, 0.5);
+
+      &:hover {
+        background-color: #0c82cf;
+        box-shadow: 0 4px 6px 0 rgba(15, 140, 198, 0.5);
+      }
+
+      &:active {
+        background-color: #0c69a5;
+        box-shadow: 0 4px 6px 0 rgba(15, 140, 198, 0.5);
+      }
+    }
+
+    &--red {
+      background-color: #d73838;
+      box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.5);
+
+      &:hover {
+        background-color: #cb2424;
+        box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.5);
+      }
+
+      &:active {
+        background-color: #b31d1d;
+        box-shadow: 0 4px 6px 0 rgba(205, 29, 17, 0.5);
+      }
+    }
+
+    &--orange {
+      background-color: #ff9700;
+      box-shadow: 0 4px 6px 0 rgba(255, 152, 0, 0.5);
+
+      &:hover {
+        background-color: #ed8f08;
+        box-shadow: 0 4px 6px 0 rgba(255, 152, 0, 0.5);
+      }
+
+      &:active {
+        background-color: #cb7b07;
+        box-shadow: 0 4px 6px 0 rgba(255, 152, 0, 0.5);
+      }
+    }
+
+    &--disabled {
+      background-color: grey;
+    }
+  }
+
+  &__progress-wrap {
+    height: 30px;
+    width: 100%;
+    display: block;
+    margin-top: 5px;
+    border: 1px solid #0092f1;
+    box-shadow: 0 4px 6px 0 rgba(15, 140, 198, 0.5);
+  }
+
+  &__progress-bar {
+    height: 100%;
+    background-color: #0092f1;
+    overflow: visible;
+    white-space: nowrap;
+    color: #ffffff;
+    line-height: 30px;
+    text-align: center;
+  }
+
+  &__error {
+    display: block;
+    margin-top: 10px;
+    color: #d41f1f;
+    height: 20px;
+    font-size: 14px;
+  }
+}

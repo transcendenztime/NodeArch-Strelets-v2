@@ -134,7 +134,7 @@ const Main = () => {
         const error = await answer.text();
         alert(`При выполнении запроса "/upload-file" на сервере произошла ошибка: ${error}`);
         // если ошибка - разрываем websocket соединение
-        if (connection) {
+        if(connection) {
           closeWSConnection();
         }
         setIsLoading(false);
@@ -144,7 +144,7 @@ const Main = () => {
       answer = await answer.json();
 
       // как отправили файл, сразу разрываем websocket соединение
-      if (connection) {
+      if(connection) {
         closeWSConnection();
       }
 
